@@ -1,0 +1,118 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>🗺️ Roteirizador de Entregas</h1>
+
+<div class="card">
+    <h2>📊 Resumo do Dia</h2>
+    <button class="btn" onclick="carregarResumo()" style="width:100%;">📊 Carregar Resumo</button>
+    <div id="resultadoResumo" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>📋 Entregas Pendentes</h2>
+    <button class="btn" onclick="carregarEntregas()" style="width:100%;">📋 Listar Entregas</button>
+    <div id="resultadoEntregas" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>🗺️ Otimizar Rota</h2>
+    <p style="color:#D4B896;">O sistema reorganiza as entregas na melhor ordem para economizar tempo e combustível.</p>
+    <button class="btn" onclick="otimizarRota()" style="width:100%;font-size:1.1em;">🚀 Otimizar Rota Agora</button>
+    <div id="resultadoOtimizacao" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>💡 Dicas de Logística</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:12px;">
+        <p>✅ Agrupe entregas por bairro</p>
+        <p>✅ Comece pelas entregas mais distantes</p>
+        <p>✅ Use Google Maps para rotas em tempo real</p>
+        <p>✅ Envie mensagem 15min antes de chegar</p>
+        <p>✅ Leve sacolas térmicas para produtos perecíveis</p>
+    </div>
+</div>
+
+<script>
+async function carregarResumo() {
+    document.getElementById('resultadoResumo').innerHTML = '<p>🔍 Carregando resumo...</p>';
+    try {
+        const resp = await fetch('/api/rotas/resumo');
+        const data = await resp.json();
+        document.getElementById('resultadoResumo').innerHTML = 
+            <div style="background:#2A1F14;padding:15px;border-radius:12px;">
+                <h3>📊 </h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                    <div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;">
+                        <span style="font-size:1.5em;color:#D4B896;"></span><br>Total
+                    </div>
+                    <div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;">
+                        <span style="font-size:1.5em;color:#4CAF50;"></span><br>Realizadas
+                    </div>
+                    <div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;">
+                        <span style="font-size:1.5em;color:#C23B22;"></span><br>Pendentes
+                    </div>
+                    <div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;">
+                        <span style="font-size:1.5em;color:#D4B896;">R$ </span><br>Faturamento
+                    </div>
+                </div>
+                <p style="margin-top:10px;">⏱️ Tempo total:  | ⛽ Combustível: R$ </p>
+                <h4 style="margin-top:10px;color:#D4B896;">⭐ Clientes Prioritários</h4>
+                
+            </div>
+        ;
+    } catch(e) {
+        document.getElementById('resultadoResumo').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+
+async function carregarEntregas() {
+    document.getElementById('resultadoEntregas').innerHTML = '<p>🔍 Carregando entregas...</p>';
+    try {
+        const resp = await fetch('/api/rotas/entregas');
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        data.forEach(e => {
+            html += '<div style="padding:10px;margin:5px 0;background:#3E3526;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">';
+            html += '<div>';
+            html += '<strong>#' + e.ordem + ' ' + e.cliente + '</strong><br>';
+            html += '📍 ' + e.endereco + '<br>';
+            html += '📱 ' + (e.telefone || 'Não informado') + ' | ⏰ ' + e.horario_estimado;
+            html += '</div>';
+            html += '<a href="https://wa.me/55' + (e.telefone || '').replace(/\D/g, '') + '?text=Olá ' + e.cliente + '! Sua entrega do Sabor e Prosa está a caminho. Chego em aproximadamente 15 minutos! 🛵" target="_blank" class="btn" style="background:#25D366;white-space:nowrap;">📱 Avisar</a>';
+            html += '</div>';
+        });
+        html += '</div>';
+        document.getElementById('resultadoEntregas').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadoEntregas').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+
+async function otimizarRota() {
+    document.getElementById('resultadoOtimizacao').innerHTML = '<p>🚀 Otimizando rota...</p>';
+    try {
+        const resp = await fetch('/api/rotas/otimizar');
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        html += '<h3>✅ Rota Otimizada!</h3>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;">';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#D4B896;">' + data.total_entregas + '</span><br>Paradas</div>';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#D4B896;">' + data.tempo_estimado_horas + '</span><br>Tempo</div>';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#D4B896;">' + data.distancia_estimada_km.toFixed(1) + ' km</span><br>Distância</div>';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#4CAF50;">' + data.economia_combustivel + '</span><br>Economia</div>';
+        html += '</div>';
+        html += '<p>🕗 Início: ' + data.horario_inicio + ' | Término: ' + data.horario_termino + '</p>';
+        html += '<h4 style="margin-top:10px;">🛵 Ordem das Entregas:</h4>';
+        data.entregas.forEach(e => {
+            html += '<p style="padding:8px;margin:3px 0;background:#3E3526;border-radius:8px;">';
+            html += '<strong>#' + e.ordem + '</strong> ' + e.cliente + ' - 📍 ' + e.endereco + ' - ⏰ ' + e.horario_estimado;
+            html += '</p>';
+        });
+        html += '</div>';
+        document.getElementById('resultadoOtimizacao').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadoOtimizacao').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+</script>
+{% endblock %}

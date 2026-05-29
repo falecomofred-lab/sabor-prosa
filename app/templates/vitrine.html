@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor e Prosa Empório</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1A120B">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1A120B; color: #F5E6D3; }
+        .header { background: #0F0A06; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .header h1 { color: #D4B896; font-size: 1.5em; }
+        .header p { color: #8B6B4A; font-size: 0.9em; }
+        .banner { background: linear-gradient(135deg, #3E3526, #2A1F14); padding: 30px 20px; text-align: center; margin-bottom: 20px; }
+        .banner h2 { color: #D4B896; font-size: 1.3em; }
+        .banner p { margin-top: 10px; opacity: 0.8; }
+        .filtros { display: flex; gap: 10px; padding: 0 20px 20px; overflow-x: auto; position: sticky; top: 100px; z-index: 99; background: #1A120B; }
+        .filtro-btn { background: #3E3526; border: none; color: #F5E6D3; padding: 10px 20px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.9em; }
+        .filtro-btn.ativo { background: #8B6B4A; }
+        .produtos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 0 20px 30px; }
+        .produto-card { background: #3E3526; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+        .produto-card:active { transform: scale(0.95); }
+        .produto-card .foto { width: 100%; height: 150px; object-fit: cover; background: #2A1F14; display: flex; align-items: center; justify-content: center; font-size: 3em; }
+        .produto-card .info { padding: 12px; }
+        .produto-card .nome { font-weight: bold; font-size: 0.95em; margin-bottom: 4px; }
+        .produto-card .preco { color: #D4B896; font-size: 1.2em; font-weight: bold; }
+        .produto-card .comprar { background: #25D366; color: white; border: none; width: 100%; padding: 8px; border-radius: 8px; margin-top: 8px; cursor: pointer; font-weight: bold; }
+        .carrinho-btn { position: fixed; bottom: 20px; right: 20px; background: #8B6B4A; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 1.5em; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 200; }
+        .carrinho-contador { position: absolute; top: -5px; right: -5px; background: #C23B22; color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 0.7em; display: flex; align-items: center; justify-content: center; display: none; }
+        .modal-carrinho { position: fixed; bottom: 0; left: 0; right: 0; background: #2A1F14; border-radius: 20px 20px 0 0; padding: 20px; z-index: 300; transform: translateY(100%); transition: transform 0.3s; max-height: 70vh; overflow-y: auto; }
+        .modal-carrinho.aberto { transform: translateY(0); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 299; display: none; }
+        .modal-overlay.aberto { display: block; }
+        .item-carrinho { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #5C4A37; }
+        .btn-qtd { background: #3E3526; border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 1.2em; }
+        .btn-remover { background: none; border: none; color: #C23B22; cursor: pointer; font-size: 1.2em; }
+        .btn-finalizar { background: #25D366; color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .footer { text-align: center; padding: 20px; border-top: 1px solid #5C4A37; font-size: 0.85em; color: #8B6B4A; margin-bottom: 80px; }
+        .footer a { color: #D4B896; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<a href="/dashboard" style="position:fixed;top:10px;left:10px;background:#8B6B4A;color:white;padding:8px 15px;border-radius:20px;text-decoration:none;z-index:300;font-size:0.9em;">← Voltar</a>
+
+    <div class="header">
+        <h1>🍽️ Sabor e Prosa</h1>
+        <p>Queijos • Vinhos • Geleias • Doces Mineiros</p>
+    </div>
+    <div class="banner">
+        <h2>🛵 Entregamos na sua casa!</h2>
+        <p>Peça pelo WhatsApp e receba com aquele sabor mineiro</p>
+    </div>
+    <div class="filtros" id="filtros">
+        <button class="filtro-btn ativo" onclick="filtrar('Todos')">Todos</button>
+        <button class="filtro-btn" onclick="filtrar('Queijos')">🧀 Queijos</button>
+        <button class="filtro-btn" onclick="filtrar('Vinhos')">🍷 Vinhos</button>
+        <button class="filtro-btn" onclick="filtrar('Geleias')">🍯 Geleias</button>
+        <button class="filtro-btn" onclick="filtrar('Cafes')">☕ Cafés</button>
+        <button class="filtro-btn" onclick="filtrar('Outros')">🛒 Outros</button>
+    </div>
+    <div class="produtos-grid" id="produtosGrid"></div>
+    <div class="footer">Desenvolvido por <a href="https://venure.com.br" target="_blank">venure.com.br</a></div>
+    <button class="carrinho-btn" onclick="abrirCarrinho()">🛒<span class="carrinho-contador" id="contadorCarrinho">0</span></button>
+    <div class="modal-overlay" id="overlay" onclick="fecharCarrinho()"></div>
+    <div class="modal-carrinho" id="modalCarrinho">
+        <h2>🛒 Seu Carrinho</h2>
+        <div id="itensCarrinho"><p style="color:#8B6B4A;text-align:center;padding:20px;">Carrinho vazio</p></div>
+        <div id="totalCarrinho" style="text-align:right;font-size:1.3em;font-weight:bold;color:#D4B896;margin-top:10px;"></div>
+        <button class="btn-finalizar" onclick="finalizarPedido()">📱 Finalizar pelo WhatsApp</button>
+    </div>
+    <script>
+        let carrinho = [];
+        let produtos = [];
+        fetch('/api/produtos/').then(r => r.json()).then(data => {
+            produtos = data.filter(p => p.estoque_atual > 0);
+            renderizarProdutos(produtos);
+        });
+        function renderizarProdutos(lista) {
+            var grid = document.getElementById('produtosGrid');
+            grid.innerHTML = '';
+            lista.forEach(function(p) {
+                var card = document.createElement('div');
+                card.className = 'produto-card';
+                card.onclick = function() { adicionarAoCarrinho(p.id, p.nome, p.preco_venda); };
+                var fotoHtml = p.foto_url ? '<img src="' + p.foto_url + '" style="width:100%;height:150px;object-fit:cover;">' : '📦';
+                card.innerHTML = '<div class="foto">' + fotoHtml + '</div>' +
+                    '<div class="info">' +
+                    '<div class="nome">' + p.nome + '</div>' +
+                    '<div class="preco">R$ ' + p.preco_venda.toFixed(2) + '</div>' +
+                    '<button class="comprar">🛒 Comprar</button>' +
+                    '</div>';
+                card.querySelector('.comprar').onclick = function(e) { e.stopPropagation(); adicionarAoCarrinho(p.id, p.nome, p.preco_venda); };
+                grid.appendChild(card);
+            });
+        }
+        function filtrar(categoria) {
+            document.querySelectorAll('.filtro-btn').forEach(function(b) { b.classList.remove('ativo'); });
+            event.target.classList.add('ativo');
+            if (categoria === 'Todos') renderizarProdutos(produtos);
+            else renderizarProdutos(produtos.filter(function(p) { return p.categoria === categoria; }));
+        }
+        function adicionarAoCarrinho(id, nome, preco) {
+            var item = carrinho.find(function(i) { return i.id === id; });
+            if (item) item.qtd++;
+            else carrinho.push({id: id, nome: nome, preco: preco, qtd: 1});
+            atualizarCarrinho();
+        }
+        function removerDoCarrinho(index) { carrinho.splice(index, 1); atualizarCarrinho(); }
+        function atualizarCarrinho() {
+            var contador = document.getElementById('contadorCarrinho');
+            var total = carrinho.reduce(function(s, i) { return s + i.qtd; }, 0);
+            contador.textContent = total;
+            contador.style.display = total > 0 ? 'flex' : 'none';
+            var itensDiv = document.getElementById('itensCarrinho');
+            var totalDiv = document.getElementById('totalCarrinho');
+            if (carrinho.length === 0) {
+                itensDiv.innerHTML = '<p style="color:#8B6B4A;text-align:center;padding:20px;">Carrinho vazio</p>';
+                totalDiv.textContent = '';
+            } else {
+                itensDiv.innerHTML = '';
+                carrinho.forEach(function(item, i) {
+                    var div = document.createElement('div');
+                    div.className = 'item-carrinho';
+                    div.innerHTML = '<div><strong>' + item.nome + '</strong><br>R$ ' + item.preco.toFixed(2) + ' x ' + item.qtd + '</div>' +
+                        '<div style="display:flex;align-items:center;gap:10px;">' +
+                        '<button class="btn-qtd">−</button><span>' + item.qtd + '</span><button class="btn-qtd">+</button>' +
+                        '<button class="btn-remover">✕</button></div>';
+                    div.querySelectorAll('.btn-qtd')[0].onclick = function() { carrinho[i].qtd = Math.max(1, carrinho[i].qtd - 1); atualizarCarrinho(); };
+                    div.querySelectorAll('.btn-qtd')[1].onclick = function() { carrinho[i].qtd++; atualizarCarrinho(); };
+                    div.querySelector('.btn-remover').onclick = function() { removerDoCarrinho(i); };
+                    itensDiv.appendChild(div);
+                });
+                totalDiv.textContent = 'Total: R$ ' + carrinho.reduce(function(s, i) { return s + i.preco * i.qtd; }, 0).toFixed(2);
+            }
+        }
+        function abrirCarrinho() { document.getElementById('modalCarrinho').classList.add('aberto'); document.getElementById('overlay').classList.add('aberto'); }
+        function fecharCarrinho() { document.getElementById('modalCarrinho').classList.remove('aberto'); document.getElementById('overlay').classList.remove('aberto'); }
+        async function finalizarPedido() {
+            if (carrinho.length === 0) return;
+            try {
+                await fetch('/api/vitrine/pedido', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:carrinho,cliente:'Cliente Vitrine',telefone:''})});
+            } catch(e) {}
+            var msg = '🍽️ *PEDIDO - SABOR E PROSA*%0A%0A';
+            carrinho.forEach(function(i) { msg += '• ' + i.nome + ' x' + i.qtd + ' - R$ ' + (i.preco*i.qtd).toFixed(2) + '%0A'; });
+            msg += '%0A*Total: R$ ' + carrinho.reduce(function(s,i) { return s + i.preco*i.qtd; }, 0).toFixed(2) + '*';
+            msg += '%0A%0A_Quero finalizar este pedido!_';
+            window.open('https://wa.me/5521966750000?text=' + msg, '_blank');
+            carrinho = []; atualizarCarrinho(); fecharCarrinho();
+            alert('✅ Pedido enviado! Entraremos em contato pelo WhatsApp.');
+        }
+    </script>
+</body>
+</html>

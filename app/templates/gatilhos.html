@@ -1,0 +1,58 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>🎯 Gatilhos Inteligentes</h1>
+
+<div class="card">
+    <h2>🤖 Assistente de Vendas</h2>
+    <p style="color:#D4B896;">O sistema analisa o comportamento dos clientes e sugere quando entrar em contato.</p>
+    
+    <div style="display:flex;gap:10px;margin:15px 0;flex-wrap:wrap;">
+        <button class="btn" onclick="carregarGatilhos('reposicao')" style="flex:1;min-width:200px;">
+            🔄 Reposição (20+ dias)
+        </button>
+        <button class="btn" onclick="carregarGatilhos('inativos')" style="flex:1;min-width:200px;">
+            💤 Clientes Inativos (30+ dias)
+        </button>
+        <button class="btn" onclick="carregarGatilhos('aniversario')" style="flex:1;min-width:200px;">
+            🎂 Aniversariantes do Mês
+        </button>
+    </div>
+</div>
+
+<div id="resultadosGatilhos"></div>
+
+<script>
+async function carregarGatilhos(tipo) {
+    document.getElementById('resultadosGatilhos').innerHTML = '<div class="card"><p>🔍 Analisando...</p></div>';
+    
+    try {
+        const resp = await fetch('/api/gatilhos/' + tipo);
+        const data = await resp.json();
+        
+        if (data.length === 0) {
+            document.getElementById('resultadosGatilhos').innerHTML = '<div class="card"><p>✅ Nenhum cliente nesta categoria no momento.</p></div>';
+            return;
+        }
+        
+        let html = '<div class="card"><h2>' + data.length + ' clientes encontrados</h2>';
+        
+        data.forEach(c => {
+            html += '<div style="background:#2A1F14;padding:15px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;">';
+            html += '<div>';
+            html += '<strong>' + c.cliente + '</strong>';
+            if (c.dias_sem_comprar) html += '<br><span style="color:#C23B22;">' + c.dias_sem_comprar + ' dias sem comprar</span>';
+            if (c.dias_inativo) html += '<br><span style="color:#C23B22;">Inativo há ' + c.dias_inativo + ' dias</span>';
+            if (c.data_nascimento) html += '<br><span style="color:#D4B896;">🎂 ' + c.data_nascimento + '</span>';
+            html += '</div>';
+            html += '<a href="https://wa.me/55' + (c.telefone || '').replace(/\D/g, '') + '?text=' + encodeURIComponent(c.mensagem) + '" target="_blank" class="btn" style="background:#25D366;white-space:nowrap;">📱 Enviar WhatsApp</a>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        document.getElementById('resultadosGatilhos').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadosGatilhos').innerHTML = '<div class="card"><p style="color:#C23B22;">Erro: ' + e + '</p></div>';
+    }
+}
+</script>
+{% endblock %}

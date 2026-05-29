@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor e Prosa - Cliente</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1A120B; color: #F5E6D3; min-height: 100vh; padding: 20px; }
+        .logo { text-align: center; font-size: 2em; color: #D4B896; margin-bottom: 20px; }
+        .item { display: flex; justify-content: space-between; padding: 15px; background: #3E3526; border-radius: 12px; margin: 10px 0; font-size: 1.2em; }
+        .total { text-align: center; font-size: 3em; font-weight: bold; color: #D4B896; margin-top: 30px; display: none; }
+        .carrossel { display: none; text-align: center; }
+        .carrossel h2 { color: #D4B896; margin-bottom: 20px; }
+        .cards { display: flex; gap: 15px; overflow-x: auto; padding: 20px; }
+        .card-item { min-width: 180px; background: #3E3526; border-radius: 12px; padding: 15px; text-align: center; }
+        .card-item .icon { font-size: 3em; }
+        .card-item h3 { color: #D4B896; font-size: 1em; }
+        .card-item .price { color: #8B6B4A; font-size: 1.2em; font-weight: bold; }
+        .footer { text-align: center; padding: 15px; margin-top: 40px; border-top: 1px solid #5C4A37; font-size: 0.85em; color: #8B6B4A; }
+        .footer a { color: #D4B896; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="logo">🍽️ Sabor e Prosa</div>
+    <div id="carrinhoCliente" style="min-height:200px;display:flex;align-items:center;justify-content:center;">
+        <p style="color:#8B6B4A;font-size:1.3em;">🛒 Aguardando itens...</p>
+    </div>
+    <div class="total" id="totalCliente"></div>
+    <div class="carrossel" id="idleCarrossel">
+        <h2>🌟 Nossos Destaques</h2>
+        <div class="cards" id="carrosselItens"></div>
+    </div>
+    <div class="footer">Desenvolvido por <a href="https://venure.com.br" target="_blank">venure.com.br</a></div>
+    <script>
+        setInterval(async () => {
+            try {
+                const resp = await fetch('/api/pdv/carrinho-ativo');
+                const data = await resp.json();
+                if (data.itens && data.itens.length > 0) {
+                    document.getElementById('carrinhoCliente').innerHTML = data.itens.map(i => 
+                        '<div class="item"><span>' + i.nome + ' x' + i.qtd + '</span><span>R$ ' + (i.preco * i.qtd).toFixed(2) + '</span></div>'
+                    ).join('');
+                    document.getElementById('totalCliente').style.display = 'block';
+                    document.getElementById('totalCliente').textContent = 'Total: R$ ' + data.total.toFixed(2);
+                    document.getElementById('idleCarrossel').style.display = 'none';
+                } else {
+                    document.getElementById('carrinhoCliente').innerHTML = '<p style="color:#8B6B4A;font-size:1.3em;">🛒 Aguardando itens...</p>';
+                    document.getElementById('totalCliente').style.display = 'none';
+                    document.getElementById('idleCarrossel').style.display = 'block';
+                    try {
+                        const resp2 = await fetch('/api/produtos/?limit=6');
+                        const prods = await resp2.json();
+                        document.getElementById('carrosselItens').innerHTML = prods.slice(0,6).map(p =>
+                            '<div class="card-item"><div class="icon">📦</div><h3>' + p.nome.substring(0,20) + '</h3><div class="price">R$ ' + p.preco_venda.toFixed(2) + '</div></div>'
+                        ).join('');
+                    } catch(e) {}
+                }
+            } catch(e) {}
+        }, 2000);
+    </script>
+</body>
+</html>

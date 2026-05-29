@@ -1,0 +1,209 @@
+﻿from fastapi import FastAPI, Request, Form, UploadFile, File, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from .config import get_settings
+from .database import engine, Base, SessionLocal
+from .models import Produto, Lote, Kit, Fornecedor, Evento, Cliente, Assinante
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor, checklist, vitrine_api
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor
+from .services.apis_publicas import APIPublicas
+from .services.agente_conteudo import AgenteConteudo
+import os, shutil
+from datetime import datetime
+
+settings = get_settings()
+Base.metadata.create_all(bind=engine)
+templates = Jinja2Templates(directory="app/templates")
+os.makedirs("static/fotos", exist_ok=True)
+os.makedirs("static/videos", exist_ok=True)
+
+app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION, docs_url="/api/docs", redoc_url="/api/redoc")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.include_router(produtos.router)
+app.include_router(chatbot.router)
+app.include_router(dashboard.router)
+app.include_router(pdv.router)
+app.include_router(busca.router)
+app.include_router(kits.router)
+app.include_router(tags.router)
+app.include_router(conteudo.router)
+app.include_router(whatsapp.router)
+app.include_router(caixa.router)
+app.include_router(gatilhos.router)
+app.include_router(roteiros.router)
+app.include_router(radar.router)
+app.include_router(rotas.router)
+app.include_router(monitor.router)
+app.include_router(checklist.router)
+app.include_router(vitrine_api.router)
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request): return RedirectResponse(url="/dashboard")
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page(request: Request):
+    db = SessionLocal()
+    pl = db.query(Produto).all()
+    m = round(sum(p.margem_percentual for p in pl)/len(pl),1) if pl else 0
+    db.close()
+    return templates.TemplateResponse("dashboard.html", {"request":request,"total_produtos":len(pl),"total_estoque":sum(p.estoque_atual for p in pl),"margem_media":m,"alertas":len([p for p in pl if p.estoque_atual <= p.estoque_minimo])})
+
+@app.get("/produtos", response_class=HTMLResponse)
+async def listar_produtos_html(request: Request):
+    db = SessionLocal(); pl = db.query(Produto).order_by(Produto.nome).all(); db.close()
+    return templates.TemplateResponse("produtos.html", {"request":request,"produtos":pl,"editando":None})
+
+@app.get("/produtos/editar/{pid}", response_class=HTMLResponse)
+async def editar_produto_html(request: Request, pid: int):
+    db = SessionLocal(); p = db.query(Produto).filter(Produto.id==pid).first(); pl = db.query(Produto).order_by(Produto.nome).all(); db.close()
+    return templates.TemplateResponse("produtos.html", {"request":request,"produtos":pl,"editando":p})
+
+@app.post("/api/produtos/form")
+async def criar_produto_form(nome:str=Form(...),categoria:str=Form(...),codigo_barras:str=Form(""),preco_custo:float=Form(...),preco_venda:float=Form(...),estoque_atual:int=Form(0),estoque_minimo:int=Form(5),validade:str=Form(""),descricao_curta:str=Form(""),historia:str=Form(""),foto:UploadFile=File(None),id:int=Form(None)):
+    db = SessionLocal(); fu=""
+    if foto and foto.filename:
+        ext=foto.filename.split(".")[-1]; fn=f"prod_{id or 'n'}_{abs(hash(foto.filename))}.{ext}"
+        with open(f"static/fotos/{fn}","wb") as b: shutil.copyfileobj(foto.file,b)
+        fu=f"/static/fotos/{fn}"
+    if id:
+        p=db.query(Produto).filter(Produto.id==id).first()
+        for a in['nome','categoria','codigo_barras','preco_custo','preco_venda','estoque_atual','estoque_minimo','descricao_curta','historia']: setattr(p,a,locals()[a])
+        p.validade=validade if validade else None
+        if fu: p.foto_url=fu
+    else:
+        db.add(Produto(nome=nome,categoria=categoria,codigo_barras=codigo_barras,preco_custo=preco_custo,preco_venda=preco_venda,estoque_atual=estoque_atual,estoque_minimo=estoque_minimo,validade=validade if validade else None,descricao_curta=descricao_curta,historia=historia,foto_url=fu))
+    db.commit(); db.close()
+    return RedirectResponse(url="/produtos",status_code=303)
+
+@app.get("/fornecedores", response_class=HTMLResponse)
+async def fornecedores_html(request: Request):
+    db = SessionLocal(); fl = db.query(Fornecedor).order_by(Fornecedor.nome).all(); db.close()
+    return templates.TemplateResponse("fornecedores.html", {"request":request,"fornecedores":fl,"editando":None})
+
+@app.get("/fornecedores/editar/{fid}", response_class=HTMLResponse)
+async def editar_fornecedor_html(request: Request, fid: int):
+    db = SessionLocal(); f = db.query(Fornecedor).filter(Fornecedor.id==fid).first(); fl = db.query(Fornecedor).order_by(Fornecedor.nome).all(); db.close()
+    return templates.TemplateResponse("fornecedores.html", {"request":request,"fornecedores":fl,"editando":f})
+
+@app.post("/api/fornecedores/form")
+async def criar_fornecedor_form(id:int=Form(None),nome:str=Form(...),cnpj:str=Form(""),contato:str=Form(""),telefone:str=Form(""),email:str=Form(""),cep:str=Form(""),logradouro:str=Form(""),bairro:str=Form(""),cidade:str=Form(""),uf:str=Form(""),observacoes:str=Form("")):
+    db = SessionLocal()
+    if id:
+        f=db.query(Fornecedor).filter(Fornecedor.id==id).first()
+        for a in['nome','cnpj','contato','telefone','email','cep','logradouro','bairro','cidade','uf','observacoes']: setattr(f,a,locals()[a])
+    else: db.add(Fornecedor(nome=nome,cnpj=cnpj,contato=contato,telefone=telefone,email=email,cep=cep,logradouro=logradouro,bairro=bairro,cidade=cidade,uf=uf,observacoes=observacoes))
+    db.commit(); db.close()
+    return RedirectResponse(url="/fornecedores",status_code=303)
+
+@app.get("/clientes", response_class=HTMLResponse)
+async def clientes_html(request: Request):
+    db = SessionLocal(); cl = db.query(Cliente).order_by(Cliente.nome).all(); db.close()
+    return templates.TemplateResponse("clientes.html", {"request":request,"clientes":cl})
+
+@app.post("/api/clientes/form")
+async def criar_cliente_form(nome:str=Form(...),telefone:str=Form(...),email:str=Form(""),cpf:str=Form(""),data_nascimento:str=Form(""),endereco:str=Form(""),observacoes:str=Form("")):
+    db = SessionLocal()
+    dn = datetime.strptime(data_nascimento,"%Y-%m-%d").date() if data_nascimento else None
+    db.add(Cliente(nome=nome,telefone=telefone,email=email,cpf=cpf,data_nascimento=dn,endereco=endereco,observacoes=observacoes))
+    db.commit(); db.close()
+    return RedirectResponse(url="/clientes",status_code=303)
+
+@app.get("/eventos", response_class=HTMLResponse)
+async def eventos_html(request: Request):
+    db = SessionLocal(); el = db.query(Evento).order_by(Evento.data).all(); db.close()
+    return templates.TemplateResponse("eventos.html", {"request":request,"eventos":el})
+
+@app.post("/api/eventos/form")
+async def criar_evento_form(nome:str=Form(...),data:str=Form(""),local:str=Form(""),tipo:str=Form(""),descricao:str=Form("")):
+    db = SessionLocal()
+    d = datetime.strptime(data,"%Y-%m-%d").date() if data else None
+    db.add(Evento(nome=nome,data=d,local=local,tipo=tipo,descricao=descricao))
+    db.commit(); db.close()
+    return RedirectResponse(url="/eventos",status_code=303)
+
+@app.get("/conteudo", response_class=HTMLResponse)
+async def conteudo_html(request: Request):
+    db = SessionLocal(); pl = db.query(Produto).order_by(Produto.nome).all(); db.close()
+    return templates.TemplateResponse("conteudo.html", {"request":request,"produtos":pl})
+
+@app.get("/pdv", response_class=HTMLResponse)
+async def pdv_html(request: Request): return templates.TemplateResponse("pdv.html", {"request":request})
+
+@app.get("/kits", response_class=HTMLResponse)
+async def kits_html(request: Request):
+    db = SessionLocal(); kl = db.query(Kit).order_by(Kit.nome).all(); pl = db.query(Produto).order_by(Produto.nome).all(); db.close()
+    return templates.TemplateResponse("kits.html", {"request":request,"kits":kl,"produtos":pl,"editando":None})
+
+@app.get("/kits/editar/{kid}", response_class=HTMLResponse)
+async def editar_kit_html(request: Request, kid: int):
+    db = SessionLocal(); k = db.query(Kit).filter(Kit.id==kid).first(); kl = db.query(Kit).order_by(Kit.nome).all(); pl = db.query(Produto).order_by(Produto.nome).all(); db.close()
+    return templates.TemplateResponse("kits.html", {"request":request,"kits":kl,"produtos":pl,"editando":k})
+
+@app.get("/busca", response_class=HTMLResponse)
+async def busca_html(request: Request): return templates.TemplateResponse("busca.html", {"request":request})
+
+@app.get("/tela-cliente", response_class=HTMLResponse)
+async def tela_cliente(request: Request): return templates.TemplateResponse("tela_cliente.html", {"request":request})
+
+@app.get("/api/consultas/cnpj")
+async def consulta_cnpj(cnpj: str = Query(...)): return JSONResponse(await APIPublicas.consultar_cnpj(cnpj))
+
+@app.get("/api/consultas/cep")
+async def consulta_cep(cep: str = Query(...)): return JSONResponse(await APIPublicas.consultar_cep(cep))
+
+@app.get("/api/consultas/clima")
+async def consulta_clima(cidade: str = Query(...)): return JSONResponse(await APIPublicas.consultar_clima(cidade))
+
+@app.get("/api/pdv/carrinho-ativo")
+async def carrinho_ativo(): return JSONResponse({"itens": [], "total": 0})
+
+@app.get("/vitrine", response_class=HTMLResponse)
+async def vitrine_publica(request: Request):
+    return templates.TemplateResponse("vitrine.html", {"request": request})
+
+@app.get("/gatilhos", response_class=HTMLResponse)
+async def gatilhos_html(request: Request):
+    return templates.TemplateResponse("gatilhos.html", {"request": request})
+
+@app.get("/estudio", response_class=HTMLResponse)
+async def estudio_html(request: Request):
+    db = SessionLocal(); pl = db.query(Produto).order_by(Produto.nome).all(); db.close()
+    return templates.TemplateResponse("estudio.html", {"request": request, "produtos": pl})
+
+@app.get("/radar", response_class=HTMLResponse)
+async def radar_html(request: Request):
+    return templates.TemplateResponse("radar.html", {"request": request})
+
+@app.get("/rotas", response_class=HTMLResponse)
+async def rotas_html(request: Request):
+    return templates.TemplateResponse("rotas.html", {"request": request})
+
+@app.get("/monitor", response_class=HTMLResponse)
+async def monitor_html(request: Request):
+    return templates.TemplateResponse("monitor.html", {"request": request})
+
+@app.get("/checklist", response_class=HTMLResponse)
+async def checklist_html(request: Request):
+    return templates.TemplateResponse("checklist.html", {"request": request})
+
+@app.get("/tutorial", response_class=HTMLResponse)
+async def tutorial_html(request: Request):
+    return templates.TemplateResponse("tutorial.html", {"request": request})
+
+@app.get("/health")
+async def health_check(): return {"status":"healthy"}
+
+@app.get("/auditoria", response_class=HTMLResponse)
+async def auditoria_html(request: Request):
+    return templates.TemplateResponse("auditoria.html", {"request": request})
+
+@app.get("/fechamento", response_class=HTMLResponse)
+async def fechamento_html(request: Request):
+    return templates.TemplateResponse("fechamento.html", {"request": request})

@@ -1,0 +1,108 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>📡 Radar de Oportunidades</h1>
+
+<div class="card">
+    <h2>🚨 Alertas de Eventos</h2>
+    <p style="color:#D4B896;">O sistema monitora eventos próximos e avisa quando agir.</p>
+    <button class="btn" onclick="carregarOportunidades()" style="width:100%;">🔍 Verificar Oportunidades</button>
+    <div id="resultadoOportunidades" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>📅 Eventos Próximos (60 dias)</h2>
+    <button class="btn" onclick="carregarEventos()" style="width:100%;">📅 Carregar Agenda</button>
+    <div id="resultadoEventos" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>💡 Onde Encontrar Eventos</h2>
+    <p style="color:#D4B896;">Sugestões de lugares para buscar feiras e eventos na sua região.</p>
+    <div class="form-group">
+        <label>Região</label>
+        <input id="regiaoInput" value="Minas Gerais" placeholder="Ex: Minas Gerais, São Paulo...">
+    </div>
+    <button class="btn" onclick="carregarSugestoes()" style="width:100%;">💡 Ver Sugestões</button>
+    <div id="resultadoSugestoes" style="margin-top:15px;"></div>
+</div>
+
+<script>
+async function carregarOportunidades() {
+    document.getElementById('resultadoOportunidades').innerHTML = '<p>🔍 Analisando eventos próximos...</p>';
+    try {
+        const resp = await fetch('/api/radar/oportunidades');
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        html += '<h3>📊 ' + data.total_oportunidades + ' oportunidades encontradas</h3>';
+        data.alertas.forEach(a => {
+            html += '<p style="padding:8px;margin:5px 0;background:#3E3526;border-radius:8px;">' + a + '</p>';
+        });
+        html += '<p style="font-size:0.8em;color:#8B6B4A;">Atualizado em: ' + data.timestamp + '</p>';
+        html += '</div>';
+        document.getElementById('resultadoOportunidades').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadoOportunidades').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+
+async function carregarEventos() {
+    document.getElementById('resultadoEventos').innerHTML = '<p>🔍 Buscando eventos...</p>';
+    try {
+        const resp = await fetch('/api/radar/eventos-proximos');
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        
+        if (data.urgentes && data.urgentes.length > 0) {
+            html += '<h3 style="color:#C23B22;">🚨 Urgentes (até 7 dias)</h3>';
+            data.urgentes.forEach(e => {
+                html += '<p style="padding:8px;margin:5px 0;background:#3E3526;border-radius:8px;border-left:4px solid #C23B22;">';
+                html += '<strong>' + e.nome + '</strong><br>';
+                html += '📅 ' + e.data + ' | 📍 ' + e.local + '<br>';
+                html += '⏰ Faltam ' + e.dias_restantes + ' dias';
+                html += '</p>';
+            });
+        }
+        
+        if (data.proximos && data.proximos.length > 0) {
+            html += '<h3 style="color:#D4B896;margin-top:15px;">📅 Próximos Eventos</h3>';
+            data.proximos.forEach(e => {
+                html += '<p style="padding:8px;margin:5px 0;background:#3E3526;border-radius:8px;">';
+                html += '<strong>' + e.nome + '</strong><br>';
+                html += '📅 ' + e.data + ' | 📍 ' + e.local + ' | 🏷️ ' + e.tipo;
+                html += '</p>';
+            });
+        }
+        
+        html += '</div>';
+        document.getElementById('resultadoEventos').innerHTML = html || '<p>Nenhum evento próximo.</p>';
+    } catch(e) {
+        document.getElementById('resultadoEventos').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+
+async function carregarSugestoes() {
+    const regiao = document.getElementById('regiaoInput').value || 'Minas Gerais';
+    document.getElementById('resultadoSugestoes').innerHTML = '<p>💡 Gerando sugestões...</p>';
+    try {
+        const resp = await fetch('/api/radar/sugestoes?regiao=' + encodeURIComponent(regiao));
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        html += '<h3>📍 Região: ' + data.regiao + '</h3>';
+        data.sugestoes.forEach(s => {
+            html += '<div style="padding:10px;margin:8px 0;background:#3E3526;border-radius:8px;">';
+            html += '<strong>' + s.tipo + '</strong> (' + s.periodo + ')<br>';
+            html += '🔍 ' + s.onde_buscar + '<br>';
+            html += '✅ ' + s.acao.replace('{regiao}', data.regiao);
+            html += '</div>';
+        });
+        html += '<div style="margin-top:10px;padding:10px;background:#4A3C2C;border-radius:8px;">';
+        html += '💡 <strong>Dica:</strong> ' + data.dica.replace('{regiao}', data.regiao);
+        html += '</div>';
+        html += '</div>';
+        document.getElementById('resultadoSugestoes').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadoSugestoes').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+</script>
+{% endblock %}

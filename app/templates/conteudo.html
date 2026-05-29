@@ -1,0 +1,12 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>📱 Gerador de Conteúdo</h1>
+<div class="card"><h2>🤖 Agente de Posts</h2>
+<div class="form-row"><div class="form-group"><label>Tipo</label><select id="tipoPost"><option value="produto_dia">✨ Produto do Dia</option><option value="harmonizacao">🍷 Harmonização</option><option value="promocao">⚠️ Promoção</option><option value="dica">💡 Dica</option></select></div>
+<div class="form-group"><label>Produto</label><select id="produtoSelect"><option value="">Selecione...</option>{% for p in produtos %}<option value="{{ p.nome }}|{{ p.descricao_curta }}|{{ p.preco_venda }}">{{ p.nome }}</option>{% endfor %}</select></div></div>
+<button class="btn" onclick="gerar()" style="width:100%;">🎨 Gerar Post</button></div>
+<div class="card" id="resultadoCard" style="display:none;"><h2>📝 Post Gerado</h2><div id="resultadoConteudo" style="white-space:pre-wrap;background:#2A1F14;padding:20px;border-radius:8px;"></div><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('resultadoConteudo').textContent);alert('Copiado!');" style="margin-top:10px;">📋 Copiar</button></div>
+<script>
+async function gerar(){const t=document.getElementById('tipoPost').value;const v=document.getElementById('produtoSelect').value;let n='',d='',p=0;if(v){const x=v.split('|');n=x[0];d=x[1]||'';p=parseFloat(x[2])||0;}document.getElementById('resultadoCard').style.display='block';document.getElementById('resultadoConteudo').textContent='Gerando...';const r=await fetch('/api/conteudo/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:t,produto_nome:n,produto_desc:d,preco:p})});const j=await r.json();document.getElementById('resultadoConteudo').textContent=j.sucesso?j.conteudo:'Erro: '+j.erro;}
+</script>
+{% endblock %}

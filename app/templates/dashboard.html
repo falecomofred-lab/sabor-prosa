@@ -1,0 +1,41 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>📊 Dashboard</h1>
+<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+    <a href="/pdv" class="btn" style="font-size:1.1em;padding:15px 25px;">🛒 Venda Rápida</a>
+    <a href="/produtos" class="btn" style="font-size:1.1em;padding:15px 25px;">📦 Novo Produto</a>
+    <a href="/conteudo" class="btn" style="font-size:1.1em;padding:15px 25px;">📱 Criar Post</a>
+</div>
+<div class="card" style="margin-bottom:20px;">
+    <h2>💰 Faturamento Hoje</h2>
+    <div style="display:flex;align-items:center;gap:20px;">
+        <span style="font-size:2.5em;font-weight:bold;color:#D4B896;" id="valorHoje">--</span>
+        <span id="tendenciaCaixa" style="font-size:1.2em;"></span>
+    </div>
+</div>
+<div class="metrics">
+    <div class="metric"><h3>{{ total_produtos }}</h3><p>Produtos</p></div>
+    <div class="metric"><h3>{{ total_estoque }}</h3><p>Estoque Total</p></div>
+    <div class="metric"><h3>{{ margem_media }}%</h3><p>Margem Média</p></div>
+    <div class="metric"><h3>{{ alertas }}</h3><p>⚠️ Alertas</p></div>
+</div>
+<div class="card"><h2>📋 Estoque Baixo</h2><div id="alertasEstoque"></div></div>
+<div class="card"><h2>💰 Margem por Categoria</h2><canvas id="graficoMargem" style="max-height:300px;"></canvas></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+fetch('/api/dashboard/caixa-comparativo').then(r=>r.json()).then(d=>{
+    document.getElementById('valorHoje').textContent='R$ '+d.hoje.toFixed(2);
+    const t=document.getElementById('tendenciaCaixa');
+    t.innerHTML=d.tendencia==='alta'?'🟢 +'+d.percentual+'%':'🔴 '+d.percentual+'%';
+    t.style.color=d.tendencia==='alta'?'#4CAF50':'#C23B22';
+});
+fetch('/api/dashboard/alertas-estoque').then(r=>r.json()).then(a=>{
+    const d=document.getElementById('alertasEstoque');
+    d.innerHTML=a.length===0?'<p>✅ Todos ok!</p>':'<table><tr><th>Produto</th><th>Estoque</th><th>Ação</th></tr>'+a.map(x=>'<tr><td>'+x.nome+'</td><td>'+x.estoque_atual+'</td><td><a href="'+x.whatsapp_link+'" target="_blank" class="btn" style="background:#25D366;font-size:0.8em;">📱 Repor</a></td></tr>').join('')+'</table>';
+});
+fetch('/api/produtos/').then(r=>r.json()).then(p=>{
+    const cats={}; p.forEach(x=>{if(!cats[x.categoria])cats[x.categoria]=[]; cats[x.categoria].push(x.margem_percentual);});
+    new Chart(document.getElementById('graficoMargem'),{type:'bar',data:{labels:Object.keys(cats),datasets:[{label:'Margem Média (%)',data:Object.keys(cats).map(c=>cats[c].reduce((a,b)=>a+b,0)/cats[c].length),backgroundColor:['#8B6B4A','#A37D5A','#5C4A37','#D4B896','#6B4F3A'],borderRadius:8}]},options:{responsive:true,plugins:{legend:{labels:{color:'#F5E6D3'}}},scales:{x:{ticks:{color:'#F5E6D3'}},y:{ticks:{color:'#F5E6D3'},beginAtZero:true}}}});
+});
+</script>
+{% endblock %}

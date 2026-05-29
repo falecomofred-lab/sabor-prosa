@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>💬 Assistente Virtual Prosa</h1>
+<div class="card">
+    <div class="chat-container" id="chat-box">
+        <div class="chat-message assistant">👋 Olá! Sou a Prosa, assistente do Sabor e Prosa. Pergunte sobre produtos, preços ou harmonizações!</div>
+    </div>
+    <form onsubmit="sendMessage(event)" style="display:flex;gap:10px;margin-top:15px;">
+        <input id="msg-input" placeholder="Digite sua dúvida..." style="flex:1;">
+        <button class="btn" type="submit">Enviar</button>
+    </form>
+</div>
+<script>
+async function sendMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('msg-input');
+    const msg = input.value;
+    if (!msg) return;
+    const box = document.getElementById('chat-box');
+    box.innerHTML += `<div class="chat-message user"><strong>Você:</strong> ${msg}</div>`;
+    input.value = '';
+    try {
+        const resp = await fetch('/api/chat/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({mensagem: msg})
+        });
+        const data = await resp.json();
+        box.innerHTML += `<div class="chat-message assistant"><strong>Prosa:</strong> ${data.resposta}</div>`;
+        box.scrollTop = box.scrollHeight;
+    } catch (err) {
+        box.innerHTML += `<div class="chat-message assistant">Erro: ${err}</div>`;
+    }
+}
+</script>
+{% endblock %}

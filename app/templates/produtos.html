@@ -1,0 +1,43 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>📦 Produtos</h1>
+<div class="card">
+    <h2>{% if editando %}Editar{% else %}Novo{% endif %} Produto</h2>
+    <form method="post" action="/api/produtos/form" enctype="multipart/form-data">
+        {% if editando %}<input type="hidden" name="id" value="{{ editando.id }}">{% endif %}
+        <div class="form-row">
+            <div class="form-group"><label>Nome*</label><input name="nome" value="{{ editando.nome if editando else '' }}" required></div>
+            <div class="form-group"><label>Categoria*</label><select name="categoria">{% for c in ['Queijos','Vinhos','Geleias','Cafés','Outros'] %}<option value="{{ c }}" {% if editando and editando.categoria==c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Código de Barras</label><input name="codigo_barras" value="{{ editando.codigo_barras if editando else '' }}"></div>
+            <div class="form-group"><label>Validade</label><input name="validade" type="date" value="{{ editando.validade if editando else '' }}"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Preço Custo (R$)*</label><input name="preco_custo" type="number" step="0.01" value="{{ editando.preco_custo if editando else '0.00' }}" required oninput="calcularMargem()"></div>
+            <div class="form-group"><label>Preço Venda (R$)*</label><input name="preco_venda" type="number" step="0.01" value="{{ editando.preco_venda if editando else '0.00' }}" required oninput="calcularMargem()"></div>
+        </div>
+        <div class="form-group"><span id="margemDisplay" style="color:#D4B896;font-weight:bold;"></span></div>
+        <div class="form-row">
+            <div class="form-group"><label>Estoque</label><input name="estoque_atual" type="number" value="{{ editando.estoque_atual if editando else '0' }}"></div>
+            <div class="form-group"><label>Estoque Mínimo</label><input name="estoque_minimo" type="number" value="{{ editando.estoque_minimo if editando else '5' }}"></div>
+        </div>
+        <div class="form-group"><label>Foto</label><input name="foto" type="file" accept="image/*" capture="environment">{% if editando and editando.foto_url %}<img src="{{ editando.foto_url }}" style="width:100px;border-radius:8px;margin-top:5px;">{% endif %}</div>
+        <div class="form-group"><label>Descrição</label><textarea name="descricao_curta" rows="2">{{ editando.descricao_curta if editando else '' }}</textarea></div>
+        <div class="form-group"><label>História</label><textarea name="historia" rows="3">{{ editando.historia if editando else '' }}</textarea></div>
+        <button class="btn" type="submit">💾 Salvar</button>{% if editando %}<a href="/produtos" class="btn" style="background:#5C4A37;margin-left:10px;">Cancelar</a>{% endif %}
+    </form>
+</div>
+<div class="card"><h2>📋 Catálogo ({{ produtos|length }})</h2><div class="product-grid">
+{% for p in produtos %}
+<div class="product-card">
+    {% if p.foto_url %}<img src="{{ p.foto_url }}" alt="{{ p.nome }}">{% else %}<div style="height:180px;background:#2A1F14;display:flex;align-items:center;justify-content:center;font-size:3em;">📷</div>{% endif %}
+    <div class="info"><h3>{{ p.nome }}</h3><p>{{ p.categoria }}</p><p class="price">R$ {{ "%.2f"|format(p.preco_venda) }}</p><p>Estoque: {{ p.estoque_atual }}{% if p.estoque_atual <= p.estoque_minimo %} <span style="color:#C23B22;">⚠️</span>{% endif %}</p><p>Margem: {{ p.margem_percentual }}%</p>
+    <a href="/produtos/editar/{{ p.id }}" class="btn" style="font-size:0.85em;">✏️ Editar</a>
+    <button onclick="duplicar({{ p.id }})" class="btn" style="font-size:0.8em;background:#5C4A37;">📋 Duplicar</button></div>
+</div>{% endfor %}</div></div>
+<script>
+function calcularMargem(){const c=parseFloat(document.querySelector('input[name=preco_custo]').value)||0;const v=parseFloat(document.querySelector('input[name=preco_venda]').value)||0;const m=c>0?((v-c)/c*100).toFixed(1):0;document.getElementById('margemDisplay').textContent='Margem: '+m+'%';}
+async function duplicar(id){if(confirm('Duplicar?')){await fetch('/api/produtos/'+id+'/duplicar',{method:'POST'});location.reload();}}
+</script>
+{% endblock %}

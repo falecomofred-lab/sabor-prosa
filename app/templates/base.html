@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor e Prosa Empório</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.ico">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1A120B; color: #F5E6D3; min-height: 100vh; }
+        .sidebar { background: #0F0A06; width: 250px; height: 100vh; position: fixed; padding: 20px; z-index: 100; overflow-y: auto; }
+        .sidebar h2 { color: #D4B896; margin-bottom: 20px; font-size: 1.2em; }
+        .sidebar a { display: block; color: #F5E6D3; padding: 10px 12px; text-decoration: none; border-radius: 8px; margin-bottom: 3px; font-size: 0.95em; }
+        .sidebar a:hover, .sidebar a.active { background: #3E3526; }
+        .main { margin-left: 250px; padding: 30px; }
+        .card { background: #3E3526; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+        .metric { background: #4A3C2C; border-radius: 12px; padding: 20px; text-align: center; }
+        .metric h3 { font-size: 2em; color: #D4B896; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #5C4A37; }
+        th { color: #D4B896; }
+        .btn { background: #8B6B4A; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #A37D5A; }
+        input, textarea, select { background: #2A1F14; border: 1px solid #5C4A37; color: #F5E6D3; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #D4B896; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .product-card { background: #3E3526; border-radius: 12px; overflow: hidden; }
+        .product-card img { width: 100%; height: 180px; object-fit: cover; }
+        .product-card .info { padding: 15px; }
+        .product-card .info h3 { color: #D4B896; }
+        .product-card .info .price { color: #8B6B4A; font-size: 1.2em; font-weight: bold; }
+        .chat-popup-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: #8B6B4A; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: none; color: white; }
+        .chat-popup { position: fixed; bottom: 90px; right: 20px; width: 380px; height: 500px; background: #2A1F14; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.7); z-index: 1000; display: none; flex-direction: column; }
+        .chat-popup.active { display: flex; }
+        .chat-popup-header { background: #3E3526; padding: 15px; font-weight: bold; color: #D4B896; display: flex; justify-content: space-between; }
+        .chat-popup-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-message { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 0.9em; }
+        .chat-message.user { background: #4A3C2C; align-self: flex-end; }
+        .chat-message.assistant { background: #3E3526; align-self: flex-start; }
+        .chat-popup-footer { padding: 10px; display: flex; gap: 8px; border-top: 1px solid #5C4A37; }
+        footer { text-align: center; padding: 15px; margin-top: 40px; border-top: 1px solid #5C4A37; font-size: 0.85em; color: #8B6B4A; }
+        footer a { color: #D4B896; text-decoration: none; }
+        @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: relative; } .main { margin-left: 0; } .metrics { grid-template-columns: repeat(2, 1fr); } .form-row { grid-template-columns: 1fr; } .chat-popup { width: 95%; right: 2.5%; } }
+/* Logo no canto superior direito */
+.logo-container {
+    position: fixed;
+    top: 10px;      /* ← era 15px */
+    right: 10px;    /* ← era 15px */
+    z-index: 1000;
+}
+.logo-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;      /* ← era 80px */
+    height: 120px;     /* ← era 80px */
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(180, 60, 60, 0.6) 0%, rgba(120, 30, 30, 0.3) 50%, transparent 70%);
+    box-shadow: 0 0 40px rgba(180, 60, 60, 0.5), 0 0 80px rgba(150, 40, 40, 0.3), 0 0 120px rgba(120, 30, 30, 0.2);
+    animation: pulsar 3s ease-in-out infinite;
+}
+@keyframes pulsar {
+    0%, 100% { box-shadow: 0 0 30px rgba(180, 60, 60, 0.5), 0 0 60px rgba(150, 40, 40, 0.3), 0 0 90px rgba(120, 30, 30, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(200, 70, 70, 0.7), 0 0 80px rgba(170, 50, 50, 0.5), 0 0 120px rgba(140, 40, 40, 0.3); }
+}
+.logo-img {
+    position: relative;
+    z-index: 2;
+    width: 100px;      /* ← era 70px */
+    height: 100px;     /* ← era 70px */
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #D4B896;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    display: block;
+    margin: 10px auto; /* ← era 5px */
+}
+    </style>
+
+</head>
+
+<body>
+
+<!-- Logo flutuante -->
+<div class="logo-container">
+    <div class="logo-glow"></div>
+<img src="/static/logo.jpeg" alt="Sabor e Prosa" class="logo-img">
+
+</div>
+    <div class="sidebar">
+    <a href="/tutorial">📚 Tutorial</a>
+    <h2>🍽️ Sabor e Prosa</h2>
+    <a href="/dashboard">📊 Dashboard</a>
+    <a href="/produtos">📦 Produtos</a>
+    <a href="/fornecedores">🚚 Fornecedores</a>
+    <a href="/eventos">🎉 Eventos</a>
+    <a href="/clientes">👥 Clientes</a>
+    <a href="/kits">🎁 Kits & Cestas</a>
+    <a href="/pdv">🛒 PDV</a>
+    <a href="/conteudo">📱 Conteúdo</a>
+    <a href="/busca">🔍 Busca</a>
+    <a href="/auditoria">📱 Auditoria</a>
+    <a href="/fechamento">💰 Fechamento</a>
+    <a href="/gatilhos">🎯 Gatilhos</a>
+    <a href="/estudio">🎬 Estúdio</a>
+    <a href="/radar">📡 Radar</a>
+    <a href="/rotas">🗺️ Rotas</a>
+    <a href="/monitor">📦 Monitor</a>
+    <a href="/checklist">✅ Checklist</a>
+    <a href="/vitrine">🛍️ Vitrine</a>
+</div>
+    </div>
+    <div class="main">{% block content %}{% endblock %}</div>
+    <button class="chat-popup-btn" id="chatToggle">💬</button>
+    <div class="chat-popup" id="chatPopup">
+        <div class="chat-popup-header">💬 Prosa - Assistente <button onclick="document.getElementById('chatPopup').classList.remove('active')" style="background:none;border:none;color:#F5E6D3;font-size:20px;cursor:pointer;">✕</button></div>
+        <div class="chat-popup-body" id="chatBody"><div class="chat-message assistant">👋 Olá! Sou a Prosa. Pergunte sobre produtos, preços ou harmonizações!</div></div>
+        <div class="chat-popup-footer"><input id="chatInput" placeholder="Digite ou fale..." onkeypress="if(event.key==='Enter')sendChat()"><button class="btn" onclick="iniciarVoz()">🎤</button><button class="btn" onclick="sendChat()">Enviar</button></div>
+    </div>
+    <script>
+        document.getElementById('chatToggle').onclick = () => { const p = document.getElementById('chatPopup'); p.classList.toggle('active'); if(p.classList.contains('active')) document.getElementById('chatInput').focus(); };
+        async function sendChat() {
+            const msg = document.getElementById('chatInput').value.trim();
+            if (!msg) return;
+            document.getElementById('chatBody').innerHTML += '<div class="chat-message user">' + msg + '</div>';
+            document.getElementById('chatInput').value = '';
+            try {
+                const resp = await fetch('/api/chat/', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mensagem:msg})});
+                const data = await resp.json();
+                document.getElementById('chatBody').innerHTML += '<div class="chat-message assistant">' + data.resposta + '</div>';
+            } catch(e) { document.getElementById('chatBody').innerHTML += '<div class="chat-message assistant">Erro: ' + e + '</div>'; }
+        }
+        function iniciarVoz() {
+            const r = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            r.lang = 'pt-BR';
+            r.onresult = (e) => { document.getElementById('chatInput').value = e.results[0][0].transcript; sendChat(); };
+            r.start();
+        }
+    </script>
+    <footer>Desenvolvido por <a href="https://venure.com.br" target="_blank">venure.com.br</a></footer>
+</body>
+</html>

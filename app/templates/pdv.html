@@ -1,0 +1,34 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>🛒 PDV</h1>
+<div class="card"><h2>⭐ Mais Vendidos</h2><div id="favoritos" style="display:flex;gap:10px;overflow-x:auto;padding:10px 0;"></div></div>
+<div class="card"><h2>📷 Código de Barras</h2><input id="codigoInput" placeholder="Escaneie..." onkeypress="if(event.key==='Enter')adicionarPorCodigo()"></div>
+<div class="card"><h2>🧾 Carrinho</h2><div id="carrinho" style="min-height:100px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:15px;">
+        <h3>Total: <span id="totalCarrinho" style="color:#D4B896;">R$ 0,00</span></h3>
+        <div><button class="btn" onclick="pausarVenda()" style="background:#5C4A37;">⏸️ Pausar</button><button class="btn" onclick="abrirPagamento()">💰 Finalizar</button></div>
+    </div>
+</div>
+<div id="modalPagamento" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center;">
+    <div style="background:#2A1F14;padding:30px;border-radius:16px;width:90%;max-width:400px;">
+        <h2>💵 Pagamento</h2><p>Total: <strong id="totalPagamento" style="font-size:1.5em;color:#D4B896;">R$ 0,00</strong></p>
+        <input id="valorRecebido" type="number" step="0.01" oninput="calcularTroco()" style="font-size:2em;text-align:center;">
+        <div id="trocoDisplay" style="font-size:3em;text-align:center;color:#4CAF50;font-weight:bold;min-height:60px;"></div>
+        <button class="btn" onclick="finalizarVenda()" style="width:100%;font-size:1.2em;">✅ Confirmar</button>
+        <button class="btn" onclick="document.getElementById('modalPagamento').style.display='none'" style="width:100%;background:#5C4A37;margin-top:5px;">Cancelar</button>
+    </div>
+</div>
+<script>
+let carrinho=[];
+fetch('/api/pdv/favoritos').then(r=>r.json()).then(p=>{document.getElementById('favoritos').innerHTML=p.map(x=>'<div onclick="add('+x.id+',\''+x.nome+'\','+x.preco+')" style="background:#3E3526;border-radius:12px;padding:15px;cursor:pointer;min-width:120px;text-align:center;"><div style="font-size:2em;">📦</div><div>'+x.nome.substring(0,15)+'</div><div style="color:#8B6B4A;">R$ '+x.preco.toFixed(2)+'</div></div>').join('');});
+function add(id,nome,preco){const i=carrinho.find(x=>x.id===id);i?i.qtd++:carrinho.push({id,nome,preco,qtd:1});render();verificarHarmonizacao(id);}
+function adicionarPorCodigo(){fetch('/api/pdv/buscar?codigo='+document.getElementById('codigoInput').value).then(r=>r.json()).then(p=>{if(!p.erro){add(p.id,p.nome,p.preco);document.getElementById('codigoInput').value='';}});}
+function render(){let t=0;document.getElementById('carrinho').innerHTML=carrinho.map((x,i)=>{t+=x.preco*x.qtd;return'<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #5C4A37;"><span>'+x.nome+' x'+x.qtd+'</span><span>R$ '+(x.preco*x.qtd).toFixed(2)+' <button onclick="carrinho.splice('+i+',1);render();" style="background:none;border:none;color:#C23B22;cursor:pointer;">✕</button></span></div>';}).join('');document.getElementById('totalCarrinho').textContent='R$ '+t.toFixed(2);}
+function abrirPagamento(){if(!carrinho.length)return alert('Carrinho vazio!');document.getElementById('totalPagamento').textContent='R$ '+carrinho.reduce((s,x)=>s+x.preco*x.qtd,0).toFixed(2);document.getElementById('modalPagamento').style.display='flex';}
+function calcularTroco(){const t=carrinho.reduce((s,x)=>s+x.preco*x.qtd,0);const r=parseFloat(document.getElementById('valorRecebido').value)||0;document.getElementById('trocoDisplay').textContent=r>=t?'Troco: R$ '+(r-t).toFixed(2):'';}
+async function finalizarVenda(){const t=carrinho.reduce((s,x)=>s+x.preco*x.qtd,0);const r=parseFloat(document.getElementById('valorRecebido').value)||0;if(r<t)return alert('Insuficiente!');await fetch('/api/pdv/vender',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:carrinho})});alert('Venda finalizada! Troco: R$ '+(r-t).toFixed(2));carrinho=[];document.getElementById('modalPagamento').style.display='none';render();}
+function pausarVenda(){if(!carrinho.length)return;localStorage.setItem('vendaPausada',JSON.stringify(carrinho));carrinho=[];render();alert('Venda pausada!');}
+async function verificarHarmonizacao(pid){try{const r=await fetch('/api/pdv/sugestao?produto_id='+pid);const d=await r.json();if(d.sugestao){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 20px;border-radius:12px;z-index:3000;';t.textContent='💡 '+d.sugestao;document.body.appendChild(t);setTimeout(()=>t.remove(),5000);}}catch(e){}}
+window.onload=()=>{const s=localStorage.getItem('vendaPausada');if(s&&confirm('Retomar venda pausada?')){carrinho=JSON.parse(s);localStorage.removeItem('vendaPausada');render();}};
+</script>
+{% endblock %}

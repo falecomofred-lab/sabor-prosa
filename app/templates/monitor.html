@@ -1,0 +1,108 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>📦 Monitor de Preços</h1>
+
+<div class="card">
+    <h2>🚨 Alertas de Promoções</h2>
+    <p style="color:#D4B896;">O sistema monitora preços e avisa quando encontrar descontos.</p>
+    <button class="btn" onclick="carregarAlertas()" style="width:100%;">🔍 Verificar Alertas</button>
+    <div id="resultadoAlertas" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>📋 Produtos Monitorados</h2>
+    <button class="btn" onclick="carregarProdutos()" style="width:100%;">📋 Listar Produtos</button>
+    <div id="resultadoProdutos" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>🏪 Fornecedores Alternativos</h2>
+    <button class="btn" onclick="carregarFornecedores()" style="width:100%;">🏪 Ver Fornecedores</button>
+    <div id="resultadoFornecedores" style="margin-top:15px;"></div>
+</div>
+
+<div class="card">
+    <h2>🔍 Onde Pesquisar Preços</h2>
+    <div id="ondeBuscar"></div>
+</div>
+
+<script>
+async function carregarAlertas() {
+    document.getElementById('resultadoAlertas').innerHTML = '<p>🔍 Verificando promoções...</p>';
+    try {
+        const resp = await fetch('/api/monitor/alertas');
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        html += '<h3>📅 ' + data.data + ' - Economia total: <span style="color:#4CAF50;">R$ ' + data.economia_total.toFixed(2) + '</span></h3>';
+        data.alertas.forEach(a => {
+            const cor = a.prioridade === 'alta' ? '#C23B22' : a.prioridade === 'media' ? '#D4B896' : '#8B6B4A';
+            html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;border-left:4px solid ' + cor + ';">';
+            html += '<strong>' + a.produto + '</strong> <span style="color:' + cor + ';">(' + a.prioridade.toUpperCase() + ')</span><br>';
+            html += '💰 De R$ ' + a.preco_normal.toFixed(2) + ' por <span style="color:#4CAF50;">R$ ' + a.preco_promocional.toFixed(2) + '</span> (' + a.desconto + ' OFF)<br>';
+            html += '🏪 ' + a.fornecedor + ' | ⏰ ' + a.validade;
+            html += '</div>';
+        });
+        html += '<h4 style="margin-top:10px;">💡 Dicas</h4>';
+        data.dicas.forEach(d => html += '<p>• ' + d + '</p>');
+        html += '</div>';
+        document.getElementById('resultadoAlertas').innerHTML = html;
+        
+        // Onde buscar
+        let htmlBusca = '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+        data.onde_buscar.forEach(s => {
+            htmlBusca += '<a href="' + s.url + '" target="_blank" class="btn" style="background:#5C4A37;">🔗 ' + s.site + '</a>';
+        });
+        htmlBusca += '</div>';
+        document.getElementById('ondeBuscar').innerHTML = htmlBusca;
+    } catch(e) {
+        document.getElementById('resultadoAlertas').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+
+async function carregarProdutos() {
+    document.getElementById('resultadoProdutos').innerHTML = '<p>📋 Carregando...</p>';
+    try {
+        const resp = await fetch('/api/monitor/produtos');
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        data.forEach(cat => {
+            html += '<h3 style="color:#D4B896;margin-top:15px;">📦 ' + cat.categoria + '</h3>';
+            cat.itens.forEach(i => {
+                html += '<p style="padding:8px;margin:3px 0;background:#3E3526;border-radius:8px;">';
+                html += '• <strong>' + i.nome + '</strong> - R$ ' + i.preco_medio.toFixed(2) + '/' + i.unidade;
+                html += ' | 🏪 ' + i.fornecedor;
+                html += '</p>';
+            });
+        });
+        html += '</div>';
+        document.getElementById('resultadoProdutos').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadoProdutos').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+
+async function carregarFornecedores() {
+    document.getElementById('resultadoFornecedores').innerHTML = '<p>🏪 Buscando fornecedores...</p>';
+    try {
+        const resp = await fetch('/api/monitor/fornecedores');
+        const data = await resp.json();
+        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        data.categorias.forEach(cat => {
+            html += '<h3 style="color:#D4B896;">' + cat.categoria + '</h3>';
+            cat.fornecedores.forEach(f => {
+                html += '<p style="padding:8px;margin:3px 0;background:#3E3526;border-radius:8px;">';
+                html += '🏪 <strong>' + f.nome + '</strong> - ' + f.diferencial;
+                html += '</p>';
+            });
+        });
+        html += '<div style="margin-top:10px;padding:10px;background:#4A3C2C;border-radius:8px;">';
+        html += '💡 <strong>Dica de negociação:</strong> ' + data.dica_negociacao;
+        html += '</div>';
+        html += '</div>';
+        document.getElementById('resultadoFornecedores').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadoFornecedores').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+</script>
+{% endblock %}

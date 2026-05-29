@@ -1,0 +1,17 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>🔍 Busca Inteligente</h1>
+<div class="card"><div style="display:flex;gap:10px;"><input id="buscaInput" placeholder="Pesquisar..." style="flex:1;font-size:1.1em;" onkeyup="if(event.key==='Enter')buscar()"><button class="btn" onclick="buscar()">🔍</button></div>
+<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;"><button class="btn" onclick="buscaRapida('Queijos')" style="background:#5C4A37;">🧀 Queijos</button><button class="btn" onclick="buscaRapida('Vinhos')" style="background:#5C4A37;">🍷 Vinhos</button><button class="btn" onclick="buscaRapida('fornecedor')" style="background:#5C4A37;">🚚 Fornecedores</button><button class="btn" onclick="buscaRapida('evento')" style="background:#5C4A37;">🎉 Eventos</button></div></div>
+<div id="resultados"></div>
+<script>
+function buscaRapida(t){document.getElementById('buscaInput').value=t;buscar();}
+async function buscar(){const t=document.getElementById('buscaInput').value.trim();if(!t)return;document.getElementById('resultados').innerHTML='<div class="card"><p>🔍 Buscando...</p></div>';
+const r=await fetch('/api/busca?termo='+encodeURIComponent(t));const d=await r.json();let h='';
+if(d.produtos&&d.produtos.length){h+='<div class="card"><h2>📦 Produtos ('+d.produtos.length+')</h2><div class="product-grid">';d.produtos.forEach(p=>{h+='<div class="product-card"><div style="height:150px;background:#2A1F14;display:flex;align-items:center;justify-content:center;font-size:3em;">📦</div><div class="info"><h3>'+p.nome+'</h3><p>'+p.categoria+'</p><p class="price">R$ '+p.preco_venda.toFixed(2)+'</p><p>Estoque: '+p.estoque_atual+'</p></div></div>';});h+='</div></div>';}
+if(d.fornecedores&&d.fornecedores.length){h+='<div class="card"><h2>🚚 Fornecedores ('+d.fornecedores.length+')</h2><table><tr><th>Nome</th><th>Cidade</th></tr>';d.fornecedores.forEach(f=>{h+='<tr><td>'+f.nome+'</td><td>'+f.cidade+'/'+f.uf+'</td></tr>';});h+='</table></div>';}
+if(d.clientes&&d.clientes.length){h+='<div class="card"><h2>👥 Clientes ('+d.clientes.length+')</h2><table><tr><th>Nome</th><th>Telefone</th></tr>';d.clientes.forEach(c=>{h+='<tr><td>'+c.nome+'</td><td>'+c.telefone+'</td></tr>';});h+='</table></div>';}
+if(d.eventos&&d.eventos.length){h+='<div class="card"><h2>🎉 Eventos ('+d.eventos.length+')</h2><table><tr><th>Nome</th><th>Data</th><th>Local</th></tr>';d.eventos.forEach(e=>{h+='<tr><td>'+e.nome+'</td><td>'+(e.data||'-')+'</td><td>'+e.local+'</td></tr>';});h+='</table></div>';}
+document.getElementById('resultados').innerHTML=h||'<div class="card"><p>😕 Nenhum resultado.</p></div>';}
+</script>
+{% endblock %}
