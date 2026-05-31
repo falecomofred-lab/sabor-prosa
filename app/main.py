@@ -55,7 +55,8 @@ app.include_router(delivery.router)
 app.include_router(apis_publicas.router)
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request): return RedirectResponse(url="/dashboard")
+async def home(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
