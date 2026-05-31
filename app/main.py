@@ -24,7 +24,10 @@ from datetime import datetime
 
 settings = get_settings()
 Base.metadata.create_all(bind=engine)
-templates = Jinja2Templates(directory="app/templates")
+import jinja2
+templates_dir = os.path.join(os.path.dirname(__file__), "templates")
+env = jinja2.Environment(loader=jinja2.FileSystemLoader(templates_dir))
+templates = Jinja2Templates(env=env)
 os.makedirs("static/fotos", exist_ok=True)
 os.makedirs("static/videos", exist_ok=True)
 
