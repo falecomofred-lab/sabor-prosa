@@ -2,107 +2,97 @@
 {% block content %}
 <h1>📦 Monitor de Preços</h1>
 
-<div class="card">
-    <h2>🚨 Alertas de Promoções</h2>
-    <p style="color:#D4B896;">O sistema monitora preços e avisa quando encontrar descontos.</p>
-    <button class="btn" onclick="carregarAlertas()" style="width:100%;">🔍 Verificar Alertas</button>
-    <div id="resultadoAlertas" style="margin-top:15px;"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+
+<!-- Coluna Esquerda -->
+<div>
+    <!-- Alertas de Promoções -->
+    <div class="card">
+        <h2>🚨 Promoções Ativas</h2>
+        <button class="btn" onclick="carregarAlertas()" style="width:100%;">🔍 Verificar Promoções</button>
+        <div id="resultadoAlertas" style="margin-top:10px;"></div>
+    </div>
+    
+    <!-- Produtos Monitorados -->
+    <div class="card">
+        <h2>📋 Produtos Monitorados</h2>
+        <button class="btn" onclick="carregarProdutos()" style="width:100%;">📋 Listar Produtos</button>
+        <div id="resultadoProdutos" style="margin-top:10px;"></div>
+    </div>
 </div>
 
-<div class="card">
-    <h2>📋 Produtos Monitorados</h2>
-    <button class="btn" onclick="carregarProdutos()" style="width:100%;">📋 Listar Produtos</button>
-    <div id="resultadoProdutos" style="margin-top:15px;"></div>
+<!-- Coluna Direita -->
+<div>
+    <!-- Fornecedores Alternativos -->
+    <div class="card">
+        <h2>🏪 Fornecedores Alternativos</h2>
+        <button class="btn" onclick="carregarFornecedores()" style="width:100%;">🏪 Ver Fornecedores</button>
+        <div id="resultadoFornecedores" style="margin-top:10px;"></div>
+    </div>
+    
+    <!-- Links Úteis -->
+    <div class="card">
+        <h2>🔗 Onde Pesquisar</h2>
+        <div id="ondeBuscar">
+            <a href="https://shopping.google.com" target="_blank" class="btn btn-outline" style="display:block;margin:5px 0;text-align:center;">🛒 Google Shopping</a>
+            <a href="https://www.mercadolivre.com.br" target="_blank" class="btn btn-outline" style="display:block;margin:5px 0;text-align:center;">🛒 Mercado Livre</a>
+            <a href="https://www.amazon.com.br" target="_blank" class="btn btn-outline" style="display:block;margin:5px 0;text-align:center;">🛒 Amazon</a>
+            <a href="https://shopee.com.br" target="_blank" class="btn btn-outline" style="display:block;margin:5px 0;text-align:center;">🛒 Shopee</a>
+        </div>
+    </div>
 </div>
 
-<div class="card">
-    <h2>🏪 Fornecedores Alternativos</h2>
-    <button class="btn" onclick="carregarFornecedores()" style="width:100%;">🏪 Ver Fornecedores</button>
-    <div id="resultadoFornecedores" style="margin-top:15px;"></div>
-</div>
-
-<div class="card">
-    <h2>🔍 Onde Pesquisar Preços</h2>
-    <div id="ondeBuscar"></div>
 </div>
 
 <script>
 async function carregarAlertas() {
-    document.getElementById('resultadoAlertas').innerHTML = '<p>🔍 Verificando promoções...</p>';
+    document.getElementById('resultadoAlertas').innerHTML = '<p style="color:#8B6B4A;">Verificando...</p>';
     try {
-        const resp = await fetch('/api/monitor/alertas');
-        const data = await resp.json();
-        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
-        html += '<h3>📅 ' + data.data + ' - Economia total: <span style="color:#4CAF50;">R$ ' + data.economia_total.toFixed(2) + '</span></h3>';
-        data.alertas.forEach(a => {
-            const cor = a.prioridade === 'alta' ? '#C23B22' : a.prioridade === 'media' ? '#D4B896' : '#8B6B4A';
-            html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;border-left:4px solid ' + cor + ';">';
-            html += '<strong>' + a.produto + '</strong> <span style="color:' + cor + ';">(' + a.prioridade.toUpperCase() + ')</span><br>';
-            html += '💰 De R$ ' + a.preco_normal.toFixed(2) + ' por <span style="color:#4CAF50;">R$ ' + a.preco_promocional.toFixed(2) + '</span> (' + a.desconto + ' OFF)<br>';
-            html += '🏪 ' + a.fornecedor + ' | ⏰ ' + a.validade;
-            html += '</div>';
-        });
-        html += '<h4 style="margin-top:10px;">💡 Dicas</h4>';
-        data.dicas.forEach(d => html += '<p>• ' + d + '</p>');
-        html += '</div>';
+        var resp = await fetch('/api/monitor/alertas'), data = await resp.json();
+        var html = '';
+        if (data.alertas && data.alertas.length) {
+            html += '<p style="color:#4CAF50;">💰 Economia total: <strong>R$ ' + (data.economia_total||0).toFixed(2) + '</strong></p>';
+            data.alertas.forEach(function(a) {
+                var cor = a.prioridade === 'alta' ? '#C23B22' : a.prioridade === 'media' ? '#D4B896' : '#8B6B4A';
+                html += '<div style="padding:10px;margin:5px 0;background:#3E3526;border-radius:8px;border-left:3px solid ' + cor + ';">';
+                html += '<strong>' + a.produto + '</strong> <span style="color:' + cor + ';">(' + (a.prioridade||'').toUpperCase() + ')</span><br>';
+                html += 'De R$ ' + a.preco_normal.toFixed(2) + ' por <span style="color:#4CAF50;">R$ ' + a.preco_promocional.toFixed(2) + '</span> (' + a.desconto + ' OFF)<br>';
+                html += '🏪 ' + a.fornecedor + ' | ⏰ ' + a.validade + '</div>';
+            });
+        } else { html = '<p style="color:#8B6B4A;">Nenhuma promoção no momento.</p>'; }
         document.getElementById('resultadoAlertas').innerHTML = html;
-        
-        // Onde buscar
-        let htmlBusca = '<div style="display:flex;gap:10px;flex-wrap:wrap;">';
-        data.onde_buscar.forEach(s => {
-            htmlBusca += '<a href="' + s.url + '" target="_blank" class="btn" style="background:#5C4A37;">🔗 ' + s.site + '</a>';
-        });
-        htmlBusca += '</div>';
-        document.getElementById('ondeBuscar').innerHTML = htmlBusca;
-    } catch(e) {
-        document.getElementById('resultadoAlertas').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+    } catch(e) { document.getElementById('resultadoAlertas').innerHTML = '<p style="color:#C23B22;">Erro.</p>'; }
 }
 
 async function carregarProdutos() {
-    document.getElementById('resultadoProdutos').innerHTML = '<p>📋 Carregando...</p>';
+    document.getElementById('resultadoProdutos').innerHTML = '<p style="color:#8B6B4A;">Carregando...</p>';
     try {
-        const resp = await fetch('/api/monitor/produtos');
-        const data = await resp.json();
-        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
-        data.forEach(cat => {
-            html += '<h3 style="color:#D4B896;margin-top:15px;">📦 ' + cat.categoria + '</h3>';
-            cat.itens.forEach(i => {
-                html += '<p style="padding:8px;margin:3px 0;background:#3E3526;border-radius:8px;">';
-                html += '• <strong>' + i.nome + '</strong> - R$ ' + i.preco_medio.toFixed(2) + '/' + i.unidade;
-                html += ' | 🏪 ' + i.fornecedor;
-                html += '</p>';
+        var resp = await fetch('/api/monitor/produtos'), data = await resp.json();
+        var html = '';
+        data.forEach(function(cat) {
+            html += '<h4 style="color:#D4B896;margin:10px 0 5px;">📦 ' + cat.categoria + '</h4>';
+            cat.itens.forEach(function(i) {
+                html += '<p style="padding:5px;margin:2px 0;background:#3E3526;border-radius:6px;">• <strong>' + i.nome + '</strong> - R$ ' + i.preco_medio.toFixed(2) + '/' + i.unidade + ' | 🏪 ' + i.fornecedor + '</p>';
             });
         });
-        html += '</div>';
-        document.getElementById('resultadoProdutos').innerHTML = html;
-    } catch(e) {
-        document.getElementById('resultadoProdutos').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+        document.getElementById('resultadoProdutos').innerHTML = html || '<p style="color:#8B6B4A;">Nenhum produto monitorado.</p>';
+    } catch(e) { document.getElementById('resultadoProdutos').innerHTML = '<p style="color:#C23B22;">Erro.</p>'; }
 }
 
 async function carregarFornecedores() {
-    document.getElementById('resultadoFornecedores').innerHTML = '<p>🏪 Buscando fornecedores...</p>';
+    document.getElementById('resultadoFornecedores').innerHTML = '<p style="color:#8B6B4A;">Buscando...</p>';
     try {
-        const resp = await fetch('/api/monitor/fornecedores');
-        const data = await resp.json();
-        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
-        data.categorias.forEach(cat => {
-            html += '<h3 style="color:#D4B896;">' + cat.categoria + '</h3>';
-            cat.fornecedores.forEach(f => {
-                html += '<p style="padding:8px;margin:3px 0;background:#3E3526;border-radius:8px;">';
-                html += '🏪 <strong>' + f.nome + '</strong> - ' + f.diferencial;
-                html += '</p>';
+        var resp = await fetch('/api/monitor/fornecedores'), data = await resp.json();
+        var html = '';
+        (data.categorias || []).forEach(function(cat) {
+            html += '<h4 style="color:#D4B896;margin:10px 0 5px;">' + cat.categoria + '</h4>';
+            (cat.fornecedores || []).forEach(function(f) {
+                html += '<p style="padding:5px;margin:2px 0;background:#3E3526;border-radius:6px;">🏪 <strong>' + f.nome + '</strong> - ' + f.diferencial + '</p>';
             });
         });
-        html += '<div style="margin-top:10px;padding:10px;background:#4A3C2C;border-radius:8px;">';
-        html += '💡 <strong>Dica de negociação:</strong> ' + data.dica_negociacao;
-        html += '</div>';
-        html += '</div>';
-        document.getElementById('resultadoFornecedores').innerHTML = html;
-    } catch(e) {
-        document.getElementById('resultadoFornecedores').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+        html += '<p style="margin-top:8px;color:#D4B896;">💡 ' + (data.dica_negociacao || '') + '</p>';
+        document.getElementById('resultadoFornecedores').innerHTML = html || '<p style="color:#8B6B4A;">Nenhum.</p>';
+    } catch(e) { document.getElementById('resultadoFornecedores').innerHTML = '<p style="color:#C23B22;">Erro.</p>'; }
 }
 </script>
 {% endblock %}

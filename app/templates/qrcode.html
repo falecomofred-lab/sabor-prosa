@@ -1,0 +1,71 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>📱 Gerador de QR Code</h1>
+
+<div class="card">
+    <h2>🎯 QR Code para Feiras/Eventos</h2>
+    <p style="color:#D4B896;">Gere QR Codes personalizados com a logo do Sabor e Prosa para imprimir e colocar nas feiras.</p>
+    
+    <div class="form-group">
+        <label>Link de destino</label>
+        <input id="urlQR" value="http://localhost:8000/cadastro-evento" placeholder="URL que o cliente vai acessar">
+    </div>
+    
+    <div class="form-group">
+        <label>Título do Cartaz</label>
+        <input id="tituloQR" value="Sabor e Prosa Empório" placeholder="Título que aparece no cartaz">
+    </div>
+    
+    <div class="form-group">
+        <label>Subtítulo</label>
+        <input id="subtituloQR" value="Escaneie e cadastre-se para receber novidades!" placeholder="Subtítulo do cartaz">
+    </div>
+    
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" onclick="gerarQR('normal')" style="flex:1;">📱 Gerar QR Code</button>
+        <button class="btn" onclick="gerarQR('cartaz')" style="flex:1;background:#5C4A37;">🖨️ Gerar Cartaz A4</button>
+    </div>
+    
+    <div id="resultadoQR" style="margin-top:20px;text-align:center;"></div>
+</div>
+
+<div class="card">
+    <h2>💡 Como usar</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
+        <p>1. <strong>Gere o QR Code</strong> com o link da página de cadastro</p>
+        <p>2. <strong>Imprima o cartaz A4</strong> ou o QR Code individual</p>
+        <p>3. <strong>Coloque na barraca</strong> da feira ou evento</p>
+        <p>4. <strong>Clientes escaneiam</strong> e fazem cadastro simplificado</p>
+        <p>5. <strong>No sistema,</strong> esses clientes ficam marcados como "Origem: feira"</p>
+    </div>
+</div>
+
+<script>
+async function gerarQR(tipo) {
+    const url = document.getElementById('urlQR').value;
+    const titulo = document.getElementById('tituloQR').value;
+    const subtitulo = document.getElementById('subtituloQR').value;
+    
+    document.getElementById('resultadoQR').innerHTML = '<p>🔄 Gerando QR Code...</p>';
+    
+    try {
+        const resp = await fetch('/api/qrcode/gerar', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({url, tipo, titulo, subtitulo})
+        });
+        const data = await resp.json();
+        
+        if (data.sucesso) {
+            document.getElementById('resultadoQR').innerHTML = 
+                '<h3 style="color:#4CAF50;">✅ QR Code Gerado!</h3>' +
+                '<img src="' + data.caminho + '" style="max-width:350px;border-radius:12px;margin:10px 0;">' +
+                '<br><a href="' + data.caminho + '" download class="btn">⬇️ Baixar</a>' +
+                '<p style="font-size:0.85em;color:#8B6B4A;margin-top:10px;">Link: ' + data.url + '</p>';
+        }
+    } catch(e) {
+        document.getElementById('resultadoQR').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
+    }
+}
+</script>
+{% endblock %}

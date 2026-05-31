@@ -1,10 +1,244 @@
 ﻿{% extends "base.html" %}
 {% block content %}
-<h1>🎉 Eventos</h1>
-<div class="card"><h2>Novo Evento</h2><form method="post" action="/api/eventos/form">
-<div class="form-row"><div class="form-group"><label>Nome*</label><input name="nome" required></div><div class="form-group"><label>Data</label><input name="data" type="date"></div></div>
-<div class="form-row"><div class="form-group"><label>Local</label><input name="local"></div><div class="form-group"><label>Tipo</label><select name="tipo"><option>cultural</option><option>gastronômico</option><option>feira</option><option>outro</option></select></div></div>
-<div class="form-group"><label>Descrição</label><textarea name="descricao" rows="2"></textarea></div>
-<button class="btn" type="submit">💾 Salvar</button></form></div>
-<div class="card"><h2>📋 Lista ({{ eventos|length }})</h2><table><tr><th>Nome</th><th>Data</th><th>Local</th><th>Tipo</th></tr>{% for e in eventos %}<tr><td>{{ e.nome }}</td><td>{{ e.data }}</td><td>{{ e.local }}</td><td>{{ e.tipo }}</td></tr>{% endfor %}</table></div>
+<h1>🎉 Central de Eventos</h1>
+
+<!-- Abas -->
+<div style="display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap;">
+    <button class="btn" onclick="mostrarAba('agenda')" id="btnAgenda" style="background:#A37D5A;">📅 Agenda</button>
+    <button class="btn" onclick="mostrarAba('radar')" id="btnRadar">📡 Radar</button>
+    <button class="btn" onclick="mostrarAba('notificacoes')" id="btnNotificacoes">🔔 Alertas</button>
+    <button class="btn" onclick="mostrarAba('roi')" id="btnRoi">💰 ROI</button>
+</div>
+
+<!-- ABA 1: Agenda -->
+<div id="abaAgenda">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+        <div class="card">
+            <h2 id="tituloEvento">➕ Novo Evento</h2>
+            <form onsubmit="salvarEvento(event)" id="formEvento">
+                <input type="hidden" id="evtId">
+                <div class="form-group"><label>Nome*</label><input id="evtNome" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Data</label><input id="evtData" type="date"></div>
+                    <div class="form-group"><label>Tipo</label><select id="evtTipo"><option>feira</option><option>gastronomico</option><option>cultural</option><option>outro</option></select></div>
+                </div>
+                <div class="form-group"><label>Local</label><input id="evtLocal"></div>
+                <button class="btn" type="submit" style="width:100%;">💾 Salvar</button>
+                <button type="button" class="btn btn-outline" onclick="limparForm()" style="width:100%;margin-top:5px;display:none;" id="btnCancelarEvt">Cancelar</button>
+            </form>
+        </div>
+        <div>
+            <div class="card" style="margin-bottom:15px;">
+                <input id="buscaEvento" placeholder="🔍 Buscar evento..." oninput="filtrarEventos()">
+            </div>
+            <div id="listaEventos"><p style="color:#8B6B4A;text-align:center;padding:30px;">Carregando...</p></div>
+        </div>
+    </div>
+</div>
+
+<!-- ABA 2: Radar -->
+<div id="abaRadar" style="display:none;">
+    <div class="card">
+        <h2>📡 Radar de Oportunidades</h2>
+        <p style="color:#D4B896;">Eventos encontrados na região. O sistema monitora Sympla, Prefeituras e EMATER.</p>
+        <div class="form-row">
+            <div class="form-group"><label>Região</label><input id="regiaoRadar" value="Niterói"></div>
+        </div>
+        <button class="btn" onclick="carregarRadar()" style="width:100%;">🔍 Buscar Eventos</button>
+        <div id="resultadoRadar" style="margin-top:15px;"></div>
+    </div>
+</div>
+
+<!-- ABA 3: Notificações -->
+<div id="abaNotificacoes" style="display:none;">
+    <div class="card">
+        <h2>🔔 Alertas de Eventos</h2>
+        <button class="btn" onclick="carregarNotificacoes()" style="width:100%;">🔄 Atualizar Alertas</button>
+        <div id="resultadoNotificacoes" style="margin-top:15px;"></div>
+    </div>
+</div>
+
+<!-- ABA 4: ROI -->
+<div id="abaRoi" style="display:none;">
+    <div class="card">
+        <h2>💰 Retorno sobre Eventos</h2>
+        <button class="btn" onclick="carregarROI()" style="width:100%;">📊 Analisar ROI</button>
+        <div id="resultadoROI" style="margin-top:15px;"></div>
+    </div>
+</div>
+
+<script>
+let eventos = [];
+
+// Navegação por abas
+function mostrarAba(aba) {
+    ['agenda','radar','notificacoes','roi'].forEach(function(a) {
+        document.getElementById('aba' + a.charAt(0).toUpperCase() + a.slice(1)).style.display = (a === aba) ? 'block' : 'none';
+        document.getElementById('btn' + a.charAt(0).toUpperCase() + a.slice(1)).style.background = (a === aba) ? '#A37D5A' : '#8B6B4A';
+    });
+    if (aba === 'notificacoes') carregarNotificacoes();
+    if (aba === 'radar') carregarRadar();
+    if (aba === 'roi') carregarROI();
+}
+
+// ========== RADAR ==========
+async function carregarRadar() {
+    var regiao = document.getElementById('regiaoRadar').value || 'Niterói';
+    document.getElementById('resultadoRadar').innerHTML = '<p>📡 Buscando eventos na região...</p>';
+    try {
+        var resp = await fetch('/api/eventos-inteligentes/radar?regiao=' + encodeURIComponent(regiao));
+        var data = await resp.json();
+        var html = '';
+        data.forEach(function(e) {
+            var matchIcon = e.match === 'altissima' ? '⭐' : e.match === 'alta' ? '✅' : '📌';
+            var matchColor = e.match === 'altissima' ? '#D4B896' : e.match === 'alta' ? '#4CAF50' : '#8B6B4A';
+            html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;border-left:4px solid ' + matchColor + ';">';
+            html += '<strong>' + matchIcon + ' ' + e.nome + '</strong><br>';
+            html += '📅 ' + new Date(e.data + 'T00:00:00').toLocaleDateString('pt-BR') + ' | 📍 ' + e.local + ' | 🏷️ ' + e.tipo + '<br>';
+            html += '👥 Público: ' + e.publico_estimado + ' | 💰 Custo: R$ ' + e.custo_estimado.toFixed(2) + '<br>';
+            html += '🔗 Fonte: ' + e.fonte + ' | ⏰ Inscrições até: ' + e.prazo_inscricao;
+            html += '</div>';
+        });
+        document.getElementById('resultadoRadar').innerHTML = html || '<p style="color:#8B6B4A;">Nenhum evento encontrado.</p>';
+    } catch(e) {
+        document.getElementById('resultadoRadar').innerHTML = '<p style="color:#C23B22;">Erro ao buscar eventos.</p>';
+    }
+}
+
+// ========== NOTIFICAÇÕES ==========
+async function carregarNotificacoes() {
+    document.getElementById('resultadoNotificacoes').innerHTML = '<p>🔔 Gerando alertas...</p>';
+    try {
+        var resp = await fetch('/api/eventos-inteligentes/notificacoes');
+        var data = await resp.json();
+        var html = '';
+        
+        if (data.urgentes && data.urgentes.length > 0) {
+            html += '<h3 style="color:#C23B22;">🚨 Urgentes</h3>';
+            data.urgentes.forEach(function(n) {
+                html += '<div style="padding:12px;margin:5px 0;background:#3E3526;border-radius:8px;border-left:4px solid #C23B22;">' + n.texto + ' <a href="' + n.link + '" class="btn" style="font-size:0.8em;float:right;">' + n.acao + '</a></div>';
+            });
+        }
+        
+        if (data.importantes && data.importantes.length > 0) {
+            html += '<h3 style="color:#D4B896;margin-top:15px;">⚠️ Importantes</h3>';
+            data.importantes.forEach(function(n) {
+                html += '<div style="padding:12px;margin:5px 0;background:#3E3526;border-radius:8px;border-left:4px solid #D4B896;">' + n.texto + ' <a href="' + n.link + '" class="btn btn-outline" style="font-size:0.8em;float:right;">' + n.acao + '</a></div>';
+            });
+        }
+        
+        if (data.rotina && data.rotina.length > 0) {
+            html += '<h3 style="color:#8B6B4A;margin-top:15px;">📋 Rotina</h3>';
+            data.rotina.forEach(function(n) {
+                html += '<div style="padding:8px;margin:3px 0;">• ' + n.texto + '</div>';
+            });
+        }
+        
+        document.getElementById('resultadoNotificacoes').innerHTML = html || '<p style="color:#8B6B4A;">Nenhum evento próximo.</p>';
+    } catch(e) {
+        document.getElementById('resultadoNotificacoes').innerHTML = '<p style="color:#C23B22;">Erro.</p>';
+    }
+}
+
+// ========== ROI ==========
+async function carregarROI() {
+    document.getElementById('resultadoROI').innerHTML = '<p>📊 Calculando ROI...</p>';
+    try {
+        var resp = await fetch('/api/eventos-inteligentes/roi');
+        var data = await resp.json();
+        var html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        
+        // Resumo
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#4CAF50;font-size:1.5em;">R$ ' + data.resumo.lucro_liquido.toFixed(2) + '</span><br>Lucro Líquido</div>';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#D4B896;font-size:1.5em;">' + data.resumo.roi_medio_percentual.toFixed(0) + '%</span><br>ROI Médio</div>';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#D4B896;font-size:1.5em;">R$ ' + data.resumo.media_faturamento.toFixed(2) + '</span><br>Média Faturamento</div>';
+        html += '<div style="background:#3E3526;padding:10px;border-radius:8px;text-align:center;"><span style="color:#D4B896;">⭐ ' + data.resumo.melhor_evento.evento + '</span><br>Melhor Evento</div>';
+        html += '</div>';
+        
+        // Histórico
+        html += '<h3>📊 Histórico</h3>';
+        data.historico.forEach(function(h) {
+            html += '<div style="padding:8px;margin:3px 0;background:#3E3526;border-radius:8px;display:flex;justify-content:space-between;">';
+            html += '<span>' + h.evento + '</span>';
+            html += '<span style="color:#4CAF50;">ROI: ' + h.roi + '% | Lucro: R$ ' + h.lucro.toFixed(2) + '</span>';
+            html += '</div>';
+        });
+        
+        html += '<p style="margin-top:10px;color:#D4B896;">💡 ' + data.dica + '</p>';
+        html += '</div>';
+        document.getElementById('resultadoROI').innerHTML = html;
+    } catch(e) {
+        document.getElementById('resultadoROI').innerHTML = '<p style="color:#C23B22;">Erro.</p>';
+    }
+}
+
+// ========== AGENDA ==========
+async function carregarEventos() {
+    try {
+        var resp = await fetch('/api/eventos/listar');
+        var data = await resp.json();
+        eventos = data;
+        renderizar(eventos);
+    } catch(e) { window.location.reload(); }
+}
+carregarEventos();
+
+function renderizar(lista) {
+    var div = document.getElementById('listaEventos');
+    if (lista.length === 0) {
+        div.innerHTML = '<div class="card" style="text-align:center;padding:30px;"><p style="color:#8B6B4A;">Nenhum evento.</p></div>';
+        return;
+    }
+    div.innerHTML = '';
+    lista.sort(function(a,b){ return (a.data||'').localeCompare(b.data||''); });
+    lista.forEach(function(e) {
+        var hoje = new Date().toISOString().split('T')[0];
+        var urgente = e.data === hoje;
+        var card = document.createElement('div');
+        card.className = 'card';
+        card.style.cssText = 'margin-bottom:8px;cursor:pointer;' + (urgente ? 'border-left:4px solid #C23B22;' : '');
+        card.onclick = function() { editar(e.id); };
+        card.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>' + e.nome + '</strong>' + (urgente ? ' <span style="color:#C23B22;">HOJE!</span>' : '') + '<br><span style="color:#8B6B4A;font-size:0.85em;">📅 ' + (e.data ? new Date(e.data+'T00:00:00').toLocaleDateString('pt-BR') : '-') + ' | 📍 ' + (e.local||'-') + '</span></div><a href="/checklist" class="btn" style="font-size:0.8em;">✅</a></div>';
+        div.appendChild(card);
+    });
+}
+
+function filtrarEventos() {
+    var busca = document.getElementById('buscaEvento').value.toLowerCase();
+    renderizar(eventos.filter(function(e){ return (e.nome||'').toLowerCase().indexOf(busca)>=0 || (e.local||'').toLowerCase().indexOf(busca)>=0; }));
+}
+
+function editar(id) {
+    var e = eventos.find(function(x){ return x.id==id; });
+    if (!e) return;
+    document.getElementById('tituloEvento').textContent = '✏️ Editar Evento';
+    document.getElementById('evtId').value = e.id;
+    document.getElementById('evtNome').value = e.nome||'';
+    document.getElementById('evtData').value = e.data||'';
+    document.getElementById('evtTipo').value = e.tipo||'feira';
+    document.getElementById('evtLocal').value = e.local||'';
+    document.getElementById('btnCancelarEvt').style.display = 'inline-block';
+}
+
+function limparForm() {
+    document.getElementById('tituloEvento').textContent = '➕ Novo Evento';
+    document.getElementById('formEvento').reset();
+    document.getElementById('evtId').value = '';
+    document.getElementById('btnCancelarEvt').style.display = 'none';
+}
+
+async function salvarEvento(e) {
+    e.preventDefault();
+    var fd = new FormData();
+    fd.append('nome', document.getElementById('evtNome').value);
+    fd.append('data', document.getElementById('evtData').value);
+    fd.append('tipo', document.getElementById('evtTipo').value);
+    fd.append('local', document.getElementById('evtLocal').value);
+    var id = document.getElementById('evtId').value;
+    if (id) fd.append('id', id);
+    await fetch('/api/eventos/form', {method:'POST', body: new URLSearchParams(fd)});
+    window.location.reload();
+}
+</script>
 {% endblock %}

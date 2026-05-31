@@ -1,19 +1,192 @@
 ﻿{% extends "base.html" %}
 {% block content %}
 <h1>🚚 Fornecedores</h1>
-<div class="card"><h2>{% if editando %}Editar{% else %}Novo{% endif %} Fornecedor</h2>
-<form method="post" action="/api/fornecedores/form">{% if editando %}<input type="hidden" name="id" value="{{ editando.id }}">{% endif %}
-<div class="form-row"><div class="form-group"><label>CNPJ*</label><div style="display:flex;gap:10px;"><input name="cnpj" id="cnpjInput" value="{{ editando.cnpj if editando else '' }}"><button type="button" class="btn" onclick="consultarCNPJ()">🔍</button></div></div>
-<div class="form-group"><label>Nome*</label><input name="nome" id="nomeInput" value="{{ editando.nome if editando else '' }}" required></div></div>
-<div class="form-row"><div class="form-group"><label>Contato</label><input name="contato" value="{{ editando.contato if editando else '' }}"></div><div class="form-group"><label>Telefone</label><input name="telefone" id="telInput" value="{{ editando.telefone if editando else '' }}"></div></div>
-<div class="form-row"><div class="form-group"><label>Email</label><input name="email" id="emailInput" value="{{ editando.email if editando else '' }}"></div><div class="form-group"><label>CEP</label><div style="display:flex;gap:10px;"><input name="cep" id="cepInput" value="{{ editando.cep if editando else '' }}"><button type="button" class="btn" onclick="consultarCEP()">📍</button></div></div></div>
-<div class="form-row"><div class="form-group"><label>Logradouro</label><input name="logradouro" id="logrInput" value="{{ editando.logradouro if editando else '' }}"></div><div class="form-group"><label>Bairro</label><input name="bairro" id="bairroInput" value="{{ editando.bairro if editando else '' }}"></div></div>
-<div class="form-row"><div class="form-group"><label>Cidade</label><input name="cidade" id="cidadeInput" value="{{ editando.cidade if editando else '' }}"></div><div class="form-group"><label>UF</label><input name="uf" id="ufInput" value="{{ editando.uf if editando else '' }}" maxlength="2"></div></div>
-<div class="form-group"><label>Observações</label><textarea name="observacoes" rows="2">{{ editando.observacoes if editando else '' }}</textarea></div>
-<button class="btn" type="submit">💾 Salvar</button>{% if editando %}<a href="/fornecedores" class="btn" style="background:#5C4A37;margin-left:10px;">Cancelar</a>{% endif %}</form></div>
-<div class="card"><h2>📋 Lista ({{ fornecedores|length }})</h2><table><tr><th>CNPJ</th><th>Nome</th><th>Cidade</th><th>Telefone</th><th>Ações</th></tr>{% for f in fornecedores %}<tr><td>{{ f.cnpj }}</td><td>{{ f.nome }}</td><td>{{ f.cidade }}/{{ f.uf }}</td><td>{{ f.telefone }}</td><td><a href="/fornecedores/editar/{{ f.id }}" class="btn" style="font-size:0.8em;">✏️</a></td></tr>{% endfor %}</table></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+
+<!-- Formulário -->
+<div class="card">
+    <h2 id="tituloForm">➕ Novo Fornecedor</h2>
+    <form onsubmit="salvarFornecedor(event)" id="formFornecedor">
+        <input type="hidden" id="fornId">
+        <div class="form-group">
+            <label>CNPJ</label>
+            <div style="display:flex;gap:8px;">
+                <input id="fornCnpj" placeholder="00.000.000/0000-00" onblur="consultarCNPJ()" style="flex:1;">
+                <button type="button" class="btn" onclick="consultarCNPJ()" style="white-space:nowrap;">🔍 Consultar</button>
+            </div>
+        </div>
+        <div class="form-group"><label>Nome*</label><input id="fornNome" required></div>
+        <div class="form-row">
+            <div class="form-group"><label>Contato</label><input id="fornContato"></div>
+            <div class="form-group"><label>Telefone</label><input id="fornTelefone"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Email</label><input id="fornEmail" type="email"></div>
+            <div class="form-group">
+                <label>CEP</label>
+                <div style="display:flex;gap:8px;">
+                    <input id="fornCep" style="flex:1;">
+                    <button type="button" class="btn" onclick="consultarCEP()" style="white-space:nowrap;">📍 Buscar</button>
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Logradouro</label><input id="fornLogradouro"></div>
+            <div class="form-group"><label>Bairro</label><input id="fornBairro"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Cidade</label><input id="fornCidade"></div>
+            <div class="form-group"><label>UF</label><input id="fornUf" maxlength="2" style="width:60px;"></div>
+        </div>
+        <div class="form-group"><label>Observações</label><textarea id="fornObs" rows="2"></textarea></div>
+        <button class="btn" type="submit" style="width:100%;">💾 Salvar</button>
+        <button type="button" class="btn btn-outline" onclick="limparForm()" style="width:100%;margin-top:5px;display:none;" id="btnCancelar">Cancelar</button>
+    </form>
+</div>
+
+<!-- Lista -->
+<div>
+    <div class="card" style="margin-bottom:15px;">
+        <input id="buscaFornecedor" placeholder="🔍 Buscar fornecedor..." oninput="filtrarFornecedores()">
+    </div>
+    <div id="listaFornecedores"></div>
+</div>
+
+</div>
+
 <script>
-async function consultarCNPJ(){const c=document.getElementById('cnpjInput').value;try{const r=await fetch('/api/consultas/cnpj?cnpj='+c);const d=await r.json();if(d.razao_social){document.getElementById('nomeInput').value=d.nome_fantasia||d.razao_social;document.getElementById('telInput').value=d.telefone;document.getElementById('emailInput').value=d.email;document.getElementById('cepInput').value=d.cep;document.getElementById('logrInput').value=d.logradouro;document.getElementById('bairroInput').value=d.bairro;document.getElementById('cidadeInput').value=d.cidade;document.getElementById('ufInput').value=d.uf;}}catch(e){}}
-async function consultarCEP(){const c=document.getElementById('cepInput').value;try{const r=await fetch('/api/consultas/cep?cep='+c);const d=await r.json();if(d.logradouro){document.getElementById('logrInput').value=d.logradouro;document.getElementById('bairroInput').value=d.bairro;document.getElementById('cidadeInput').value=d.cidade;document.getElementById('ufInput').value=d.uf;}}catch(e){}}
+let fornecedores = [];
+
+fetch('/api/fornecedores').then(r => r.json()).then(d => {
+    fornecedores = d;
+    renderizar(d);
+}).catch(() => {
+    // Fallback: carregar via HTML
+    fetch(window.location.href).then(r => r.text()).then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const rows = doc.querySelectorAll('table tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4) {
+                fornecedores.push({
+                    id: cells[4]?.querySelector('a')?.href?.split('/').pop(),
+                    cnpj: cells[0]?.textContent?.trim(),
+                    nome: cells[1]?.textContent?.trim(),
+                    cidade: cells[2]?.textContent?.trim(),
+                    telefone: cells[3]?.textContent?.trim()
+                });
+            }
+        });
+        renderizar(fornecedores);
+    });
+});
+
+function renderizar(lista) {
+    const div = document.getElementById('listaFornecedores');
+    if (lista.length === 0) {
+        div.innerHTML = '<div class="card" style="text-align:center;padding:30px;"><p style="color:#8B6B4A;">Nenhum fornecedor encontrado.</p></div>';
+        return;
+    }
+    div.innerHTML = lista.map(f => 
+        '<div class="card" style="margin-bottom:8px;cursor:pointer;" onclick="editarFornecedor(' + f.id + ')">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<div><strong>' + (f.nome || 'Sem nome') + '</strong><br><span style="color:#8B6B4A;font-size:0.85em;">' + (f.cnpj || '') + ' | ' + (f.cidade || '') + '/' + (f.uf || '') + '</span></div>' +
+        '<a href="https://wa.me/55' + (f.telefone || '').replace(/\D/g,'') + '" target="_blank" onclick="event.stopPropagation()" class="btn" style="background:#25D366;font-size:0.8em;">📱</a>' +
+        '</div></div>'
+    ).join('');
+}
+
+function filtrarFornecedores() {
+    const busca = document.getElementById('buscaFornecedor').value.toLowerCase();
+    renderizar(fornecedores.filter(f => 
+        (f.nome || '').toLowerCase().includes(busca) || 
+        (f.cnpj || '').includes(busca) ||
+        (f.cidade || '').toLowerCase().includes(busca)
+    ));
+}
+
+async function consultarCNPJ() {
+    const cnpj = document.getElementById('fornCnpj').value.replace(/\D/g,'');
+    if (cnpj.length < 14) return;
+    try {
+        const r = await fetch('/api/consultas/cnpj?cnpj=' + cnpj);
+        const d = await r.json();
+        if (d.razao_social) {
+            document.getElementById('fornNome').value = d.nome_fantasia || d.razao_social;
+            document.getElementById('fornTelefone').value = d.telefone || '';
+            document.getElementById('fornEmail').value = d.email || '';
+            document.getElementById('fornCep').value = d.cep || '';
+            document.getElementById('fornLogradouro').value = d.logradouro || '';
+            document.getElementById('fornBairro').value = d.bairro || '';
+            document.getElementById('fornCidade').value = d.cidade || '';
+            document.getElementById('fornUf').value = d.uf || '';
+        }
+    } catch(e) {}
+}
+
+async function consultarCEP() {
+    const cep = document.getElementById('fornCep').value.replace(/\D/g,'');
+    if (cep.length < 8) return;
+    try {
+        const r = await fetch('/api/consultas/cep?cep=' + cep);
+        const d = await r.json();
+        if (d.logradouro) {
+            document.getElementById('fornLogradouro').value = d.logradouro;
+            document.getElementById('fornBairro').value = d.bairro;
+            document.getElementById('fornCidade').value = d.cidade;
+            document.getElementById('fornUf').value = d.uf;
+        }
+    } catch(e) {}
+}
+
+async function salvarFornecedor(e) {
+    e.preventDefault();
+    const id = document.getElementById('fornId').value;
+    const formData = new FormData();
+    formData.append('nome', document.getElementById('fornNome').value);
+    formData.append('cnpj', document.getElementById('fornCnpj').value);
+    formData.append('contato', document.getElementById('fornContato').value);
+    formData.append('telefone', document.getElementById('fornTelefone').value);
+    formData.append('email', document.getElementById('fornEmail').value);
+    formData.append('cep', document.getElementById('fornCep').value);
+    formData.append('logradouro', document.getElementById('fornLogradouro').value);
+    formData.append('bairro', document.getElementById('fornBairro').value);
+    formData.append('cidade', document.getElementById('fornCidade').value);
+    formData.append('uf', document.getElementById('fornUf').value);
+    formData.append('observacoes', document.getElementById('fornObs').value);
+    if (id) formData.append('id', id);
+    
+    await fetch('/api/fornecedores/form', {method:'POST',body:new URLSearchParams(formData)});
+    location.reload();
+}
+
+function editarFornecedor(id) {
+    const f = fornecedores.find(x => x.id == id);
+    if (!f) return window.location.href = '/fornecedores/editar/' + id;
+    document.getElementById('tituloForm').textContent = '✏️ Editar Fornecedor';
+    document.getElementById('fornId').value = f.id;
+    document.getElementById('fornCnpj').value = f.cnpj || '';
+    document.getElementById('fornNome').value = f.nome || '';
+    document.getElementById('fornContato').value = f.contato || '';
+    document.getElementById('fornTelefone').value = f.telefone || '';
+    document.getElementById('fornEmail').value = f.email || '';
+    document.getElementById('fornCep').value = f.cep || '';
+    document.getElementById('fornLogradouro').value = f.logradouro || '';
+    document.getElementById('fornBairro').value = f.bairro || '';
+    document.getElementById('fornCidade').value = f.cidade || '';
+    document.getElementById('fornUf').value = f.uf || '';
+    document.getElementById('fornObs').value = f.observacoes || '';
+    document.getElementById('btnCancelar').style.display = 'inline-block';
+    document.getElementById('fornNome').focus();
+}
+
+function limparForm() {
+    document.getElementById('tituloForm').textContent = '➕ Novo Fornecedor';
+    document.getElementById('formFornecedor').reset();
+    document.getElementById('fornId').value = '';
+    document.getElementById('btnCancelar').style.display = 'none';
+}
 </script>
 {% endblock %}

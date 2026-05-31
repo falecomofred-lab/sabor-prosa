@@ -2,57 +2,142 @@
 {% block content %}
 <h1>🎯 Gatilhos Inteligentes</h1>
 
-<div class="card">
-    <h2>🤖 Assistente de Vendas</h2>
-    <p style="color:#D4B896;">O sistema analisa o comportamento dos clientes e sugere quando entrar em contato.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+
+<!-- Coluna Esquerda: Tipos de Gatilho -->
+<div>
+    <div class="card">
+        <h2>🤖 Assistente de Vendas</h2>
+        <p style="color:#D4B896;">O sistema analisa o comportamento dos clientes e sugere quando entrar em contato.</p>
+        
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:15px;">
+            <button class="btn" onclick="carregarGatilhos('reposicao')" style="text-align:left;">
+                🔄 <strong>Reposição</strong><br><span style="font-size:0.8em;opacity:0.8;">Clientes que compraram há 20+ dias</span>
+            </button>
+            <button class="btn" onclick="carregarGatilhos('inativos')" style="text-align:left;">
+                💤 <strong>Reengajamento</strong><br><span style="font-size:0.8em;opacity:0.8;">Clientes sem comprar há 30+ dias</span>
+            </button>
+            <button class="btn" onclick="carregarGatilhos('aniversario')" style="text-align:left;">
+                🎂 <strong>Aniversariantes</strong><br><span style="font-size:0.8em;opacity:0.8;">Clientes do mês</span>
+            </button>
+        </div>
+    </div>
     
-    <div style="display:flex;gap:10px;margin:15px 0;flex-wrap:wrap;">
-        <button class="btn" onclick="carregarGatilhos('reposicao')" style="flex:1;min-width:200px;">
-            🔄 Reposição (20+ dias)
-        </button>
-        <button class="btn" onclick="carregarGatilhos('inativos')" style="flex:1;min-width:200px;">
-            💤 Clientes Inativos (30+ dias)
-        </button>
-        <button class="btn" onclick="carregarGatilhos('aniversario')" style="flex:1;min-width:200px;">
-            🎂 Aniversariantes do Mês
-        </button>
+    <!-- Cards de Frases Prontas -->
+    <div class="card">
+        <h2>📝 Frases Prontas</h2>
+        <p style="color:#D4B896;">Copys de remarketing e reversão para WhatsApp.</p>
+        <div id="frasesProntas"></div>
     </div>
 </div>
 
-<div id="resultadosGatilhos"></div>
+<!-- Coluna Direita: Resultados -->
+<div>
+    <div class="card">
+        <h2>📋 Clientes Encontrados</h2>
+        <div id="resultadosGatilhos">
+            <p style="color:#8B6B4A;text-align:center;padding:30px;">Selecione um gatilho para ver os clientes.</p>
+        </div>
+    </div>
+</div>
+
+</div>
 
 <script>
+// Base de frases prontas por categoria
+var frasesProntas = {
+    reposicao: [
+        {titulo: "🍷 Saudades do Vinho", texto: "Oi {cliente}! Tudo bem? Já faz {dias} dias que você não aparece por aqui. Seu vinho favorito está em promoção hoje! Vem dar uma olhada? 🍷"},
+        {titulo: "🧀 Queijo Fresquinho", texto: "{cliente}, chegou queijo canastra fresquinho! Faz {dias} dias desde sua última visita... tá esperando o quê? Vem buscar! 🧀"},
+        {titulo: "☕ Café da Tarde", texto: "Oi {cliente}! Que tal um café especial hoje? Nosso estoque está cheio de novidades. Aparece no Empório! ☕"},
+        {titulo: "🎁 Novidade Chegando", texto: "{cliente}, toda semana tem produto novo aqui! Já faz {dias} dias que você não vem. Corre que tem surpresa boa! 🎁"},
+        {titulo: "🤝 Senti Falta", texto: "Oi {cliente}! Senti sua falta por aqui. Separei um desconto especial de 10% na sua próxima compra. Vem me visitar! 🤝"}
+    ],
+    inativos: [
+        {titulo: "💚 Saudades de Você", texto: "Oi {cliente}! Quanto tempo, hein? O Empório está com cara nova e produtos incríveis. Volta aqui pra gente matar a saudade! 💚"},
+        {titulo: "🎯 Oferta Exclusiva", texto: "{cliente}, preparei uma oferta exclusiva para você: 15% de desconto na sua próxima compra. Válido esta semana! 🎯"},
+        {titulo: "🆕 Novidades Esperando", texto: "Oi {cliente}! Tem tanta novidade que eu nem sei por onde começar... Vinhos novos, queijos especiais, geleias artesanais. Vem ver! 🆕"},
+        {titulo: "🙏 Segunda Chance", texto: "{cliente}, sei que a vida é corrida, mas o Sabor e Prosa tá aqui por você. Que tal voltar com um desconto especial de boas-vindas? 🙏"},
+        {titulo: "📦 Kit Especial", texto: "Oi {cliente}! Montei um kit especial para você: queijo + vinho + geleia com preço imperdível. Só para clientes especiais. Vem ver? 📦"}
+    ],
+    aniversario: [
+        {titulo: "🎂 Feliz Aniversário", texto: "🎂 Feliz aniversário, {cliente}! O Sabor e Prosa preparou um presente: 15% de desconto este mês. Vem comemorar com a gente! 🎉"},
+        {titulo: "🎈 Presente Especial", texto: "Parabéns, {cliente}! 🎈 Seu presente tá te esperando: um combo exclusivo com desconto de aniversariante. Passa aqui! 🧀🍷"},
+        {titulo: "🎁 Mês de Festa", texto: "{cliente}, este mês é especial! Ganhe um brinde surpresa na sua próxima compra. Feliz aniversário! 🎁✨"},
+        {titulo: "🥂 Brinde Especial", texto: "🎂 Feliz aniversário, {cliente}! Nada melhor que comemorar com queijo e vinho bons. 15% off para você hoje! 🥂"},
+        {titulo: "🌟 Presente VIP", texto: "{cliente}, no mês do seu aniversário você é VIP! Desconto especial + brinde surpresa. Vem aproveitar! 🌟"}
+    ]
+};
+
+// Renderizar frases prontas
+function renderizarFrases(tipo) {
+    var frases = frasesProntas[tipo] || frasesProntas['reposicao'];
+    var div = document.getElementById('frasesProntas');
+    div.innerHTML = frases.map(function(f, i) {
+        return '<div style="background:#2A1F14;padding:12px;border-radius:10px;margin:8px 0;border-left:3px solid #D4B896;">' +
+            '<strong style="color:#D4B896;">' + f.titulo + '</strong>' +
+            '<p style="font-size:0.85em;margin:5px 0;">' + f.texto.replace('{cliente}', '<strong>{cliente}</strong>').replace('{dias}', '<strong>{dias}</strong>') + '</p>' +
+            '<button class="btn" style="font-size:0.75em;margin-top:5px;" onclick="usarFrase(' + i + ', \'' + tipo + '\')">📋 Usar Esta Frase</button>' +
+            '</div>';
+    }).join('');
+}
+
+var fraseSelecionada = '';
+
+function usarFrase(index, tipo) {
+    fraseSelecionada = frasesProntas[tipo][index].texto;
+    alert('✅ Frase selecionada! Agora clique em "📱 Enviar" em qualquer cliente.');
+}
+
 async function carregarGatilhos(tipo) {
-    document.getElementById('resultadosGatilhos').innerHTML = '<div class="card"><p>🔍 Analisando...</p></div>';
+    document.getElementById('resultadosGatilhos').innerHTML = '<p style="color:#8B6B4A;text-align:center;padding:30px;">🔍 Analisando...</p>';
+    renderizarFrases(tipo);
     
     try {
-        const resp = await fetch('/api/gatilhos/' + tipo);
-        const data = await resp.json();
+        var resp = await fetch('/api/gatilhos/' + tipo);
+        var data = await resp.json();
         
-        if (data.length === 0) {
-            document.getElementById('resultadosGatilhos').innerHTML = '<div class="card"><p>✅ Nenhum cliente nesta categoria no momento.</p></div>';
+        if (!data.length) {
+            document.getElementById('resultadosGatilhos').innerHTML = '<div class="card" style="text-align:center;padding:30px;"><p style="color:#4CAF50;">✅ Nenhum cliente nesta categoria no momento.</p></div>';
             return;
         }
         
-        let html = '<div class="card"><h2>' + data.length + ' clientes encontrados</h2>';
-        
-        data.forEach(c => {
-            html += '<div style="background:#2A1F14;padding:15px;border-radius:12px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;">';
-            html += '<div>';
-            html += '<strong>' + c.cliente + '</strong>';
-            if (c.dias_sem_comprar) html += '<br><span style="color:#C23B22;">' + c.dias_sem_comprar + ' dias sem comprar</span>';
-            if (c.dias_inativo) html += '<br><span style="color:#C23B22;">Inativo há ' + c.dias_inativo + ' dias</span>';
-            if (c.data_nascimento) html += '<br><span style="color:#D4B896;">🎂 ' + c.data_nascimento + '</span>';
+        var html = '';
+        data.forEach(function(c, i) {
+            var infoExtra = '';
+            if (c.dias_sem_comprar) infoExtra = '<span style="color:#C23B22;">' + c.dias_sem_comprar + ' dias sem comprar</span>';
+            if (c.dias_inativo) infoExtra = '<span style="color:#C23B22;">Inativo há ' + c.dias_inativo + ' dias</span>';
+            if (c.data_nascimento) infoExtra = '<span style="color:#D4B896;">🎂 ' + c.data_nascimento + '</span>';
+            
+            var tel = (c.telefone || '').replace(/\D/g, '');
+            
+            // Usar frase selecionada ou aleatória
+            var msg;
+            if (fraseSelecionada) {
+                msg = fraseSelecionada.replace('{cliente}', c.cliente).replace('{dias}', c.dias_sem_comprar || c.dias_inativo || 'alguns');
+            } else {
+                var frases = frasesProntas[tipo] || frasesProntas['reposicao'];
+                var f = frases[Math.floor(Math.random() * frases.length)];
+                msg = f.texto.replace('{cliente}', c.cliente).replace('{dias}', c.dias_sem_comprar || c.dias_inativo || 'alguns');
+            }
+            
+            html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">';
+            html += '<div><strong>#' + (i+1) + ' ' + c.cliente + '</strong><br>' + infoExtra + '</div>';
+            html += '<a href="https://wa.me/55' + tel + '?text=' + encodeURIComponent(msg) + '" target="_blank" class="btn" style="background:#25D366;white-space:nowrap;font-size:0.8em;">📱 Enviar WhatsApp</a>';
             html += '</div>';
-            html += '<a href="https://wa.me/55' + (c.telefone || '').replace(/\D/g, '') + '?text=' + encodeURIComponent(c.mensagem) + '" target="_blank" class="btn" style="background:#25D366;white-space:nowrap;">📱 Enviar WhatsApp</a>';
+            html += '<div style="background:#2A1F14;padding:8px;border-radius:6px;font-size:0.82em;color:#D4B896;">💬 ' + msg + '</div>';
             html += '</div>';
         });
         
-        html += '</div>';
         document.getElementById('resultadosGatilhos').innerHTML = html;
+        
     } catch(e) {
-        document.getElementById('resultadosGatilhos').innerHTML = '<div class="card"><p style="color:#C23B22;">Erro: ' + e + '</p></div>';
+        document.getElementById('resultadosGatilhos').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
     }
 }
+
+// Carregar frases padrão
+renderizarFrases('reposicao');
 </script>
 {% endblock %}

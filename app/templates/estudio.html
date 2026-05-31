@@ -2,85 +2,108 @@
 {% block content %}
 <h1>🎬 Estúdio de Conteúdo</h1>
 
-<div class="card">
-    <h2>📊 Análise de Estoque Parado</h2>
-    <p style="color:#D4B896;">A IA analisa produtos com estoque alto e sugere ações.</p>
-    <button class="btn" onclick="analisarEstoque()" style="width:100%;">🔍 Analisar Estoque</button>
-    <div id="resultadoEstoque" style="margin-top:15px;"></div>
-</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
 
-<div class="card">
-    <h2>🎥 Gerador de Roteiro para Vídeo</h2>
-    <div class="form-row">
+<!-- Coluna Esquerda -->
+<div>
+    <!-- Análise de Estoque -->
+    <div class="card">
+        <h2>📊 Análise de Estoque</h2>
+        <p style="color:#D4B896;">A IA analisa produtos com estoque alto e sugere ações de marketing.</p>
+        <button class="btn" onclick="analisarEstoque()" style="width:100%;">🔍 Analisar Estoque</button>
+        <div id="resultadoEstoque" style="margin-top:10px;"></div>
+    </div>
+    
+    <!-- Gerador de Roteiro -->
+    <div class="card">
+        <h2>🎥 Roteiro para Vídeo</h2>
         <div class="form-group">
             <label>Produto</label>
-            <select id="produtoRoteiro">
-                <option value="">Selecione...</option>
-                {% for p in produtos %}
-                <option value="{{ p.nome }}|{{ p.descricao_curta }}|{{ p.preco_venda }}">{{ p.nome }}</option>
-                {% endfor %}
-            </select>
+            <select id="produtoRoteiro"><option value="">Selecione...</option></select>
         </div>
+        <button class="btn" onclick="gerarRoteiro()" style="width:100%;">🎬 Gerar Roteiro 30s</button>
+        <div id="resultadoRoteiro" style="margin-top:10px;"></div>
     </div>
-    <button class="btn" onclick="gerarRoteiro()" style="width:100%;">🎬 Gerar Roteiro</button>
-    <div id="resultadoRoteiro" style="margin-top:15px;"></div>
 </div>
 
-<div class="card">
-    <h2>🎁 Gerador de Combo Promocional</h2>
-    <p style="color:#D4B896;">A IA sugere combos com produtos do estoque para aumentar vendas.</p>
-    <button class="btn" onclick="gerarCombo()" style="width:100%;">🎁 Sugerir Combo</button>
-    <div id="resultadoCombo" style="margin-top:15px;"></div>
+<!-- Coluna Direita -->
+<div>
+    <!-- Sugestão de Combo -->
+    <div class="card">
+        <h2>🎁 Combo Promocional</h2>
+        <p style="color:#D4B896;">A IA sugere combos com produtos do estoque para aumentar vendas.</p>
+        <button class="btn" onclick="gerarCombo()" style="width:100%;">🎁 Sugerir Combo</button>
+        <div id="resultadoCombo" style="margin-top:10px;"></div>
+    </div>
+    
+    <!-- Dicas -->
+    <div class="card">
+        <h2>💡 Ideias de Conteúdo</h2>
+        <div style="background:#2A1F14;padding:12px;border-radius:8px;">
+            <p>📱 Poste todo dia às 10h ou 19h</p>
+            <p>🎬 Reels de 30s têm mais alcance</p>
+            <p>🧀 Mostre a preparação dos produtos</p>
+            <p>🍷 Faça harmonizações ao vivo</p>
+            <p>👥 Reposte stories de clientes</p>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
+// Carregar produtos
+fetch('/api/produtos/').then(r => r.json()).then(function(prods) {
+    var sel = document.getElementById('produtoRoteiro');
+    prods.filter(function(p) { return p.estoque_atual > 0; }).forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p.nome + '|' + (p.descricao_curta || '') + '|' + p.preco_venda;
+        opt.textContent = p.nome + ' (R$ ' + p.preco_venda.toFixed(2) + ')';
+        sel.appendChild(opt);
+    });
+});
+
 async function analisarEstoque() {
     document.getElementById('resultadoEstoque').innerHTML = '<p>🤖 IA analisando estoque...</p>';
     try {
-        const resp = await fetch('/api/roteiros/estoque-parado');
-        const data = await resp.json();
-        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
-        html += '<h3>📦 Produtos com Estoque Alto</h3>';
-        data.sugestoes.forEach(p => {
-            html += '<p>• <strong>' + p.produto + '</strong>: ' + p.estoque + ' unid - R$ ' + p.preco.toFixed(2) + '</p>';
-        });
-        html += '<h3 style="margin-top:15px;">🤖 Sugestões da IA</h3>';
-        html += '<pre style="white-space:pre-wrap;">' + data.analise_ia + '</pre>';
-        html += '</div>';
+        var resp = await fetch('/api/roteiros/estoque-parado'), data = await resp.json();
+        var html = '<div style="background:#2A1F14;padding:12px;border-radius:8px;">';
+        if (data.sugestoes && data.sugestoes.length) {
+            html += '<h3 style="color:#C23B22;">📦 Produtos com Estoque Alto</h3>';
+            data.sugestoes.forEach(function(p) {
+                html += '<p style="padding:3px 0;">• <strong>' + p.produto + '</strong>: ' + p.estoque + ' unid - R$ ' + p.preco.toFixed(2) + '</p>';
+            });
+        }
+        html += '<h3 style="color:#D4B896;margin-top:10px;">🤖 Análise IA</h3>';
+        html += '<pre style="white-space:pre-wrap;font-size:0.85em;">' + (data.analise_ia || data.mensagem || 'Estoque equilibrado!') + '</pre></div>';
         document.getElementById('resultadoEstoque').innerHTML = html;
-    } catch(e) {
-        document.getElementById('resultadoEstoque').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+    } catch(e) { document.getElementById('resultadoEstoque').innerHTML = '<p style="color:#C23B22;">Erro.</p>'; }
 }
 
 async function gerarRoteiro() {
-    const val = document.getElementById('produtoRoteiro').value;
+    var val = document.getElementById('produtoRoteiro').value;
     if (!val) return alert('Selecione um produto!');
-    const [nome, desc, preco] = val.split('|');
-    
-    document.getElementById('resultadoRoteiro').innerHTML = '<p>🤖 IA criando roteiro...</p>';
+    var p = val.split('|');
+    document.getElementById('resultadoRoteiro').innerHTML = '<p>🤖 Criando roteiro...</p>';
     try {
-        const resp = await fetch('/api/roteiros/video', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({produto_nome: nome, produto_desc: desc, preco: parseFloat(preco)})
-        });
-        const data = await resp.json();
-        document.getElementById('resultadoRoteiro').innerHTML = '<div style="background:#2A1F14;padding:15px;border-radius:12px;"><h3>🎬 Roteiro para: ' + data.produto + '</h3><pre style="white-space:pre-wrap;">' + data.roteiro + '</pre></div>';
-    } catch(e) {
-        document.getElementById('resultadoRoteiro').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+        var resp = await fetch('/api/roteiros/video', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({produto_nome:p[0], produto_desc:p[1]||'', preco:parseFloat(p[2])||0})
+        }), data = await resp.json();
+        document.getElementById('resultadoRoteiro').innerHTML = 
+            '<div style="background:#2A1F14;padding:12px;border-radius:8px;"><h3>🎬 ' + data.produto + '</h3>' +
+            '<pre style="white-space:pre-wrap;font-size:0.85em;">' + data.roteiro + '</pre></div>';
+    } catch(e) { document.getElementById('resultadoRoteiro').innerHTML = '<p style="color:#C23B22;">Erro.</p>'; }
 }
 
 async function gerarCombo() {
-    document.getElementById('resultadoCombo').innerHTML = '<p>🤖 IA criando combo...</p>';
+    document.getElementById('resultadoCombo').innerHTML = '<p>🤖 IA analisando estoque...</p>';
     try {
-        const resp = await fetch('/api/roteiros/combo');
-        const data = await resp.json();
-        document.getElementById('resultadoCombo').innerHTML = '<div style="background:#2A1F14;padding:15px;border-radius:12px;"><h3>🎁 Combo Sugerido</h3><pre style="white-space:pre-wrap;">' + data.combo_sugerido + '</pre></div>';
-    } catch(e) {
-        document.getElementById('resultadoCombo').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+        var resp = await fetch('/api/roteiros/combo'), data = await resp.json();
+        document.getElementById('resultadoCombo').innerHTML = 
+            '<div style="background:#2A1F14;padding:12px;border-radius:8px;">' +
+            '<pre style="white-space:pre-wrap;font-size:0.85em;">' + data.combo_sugerido + '</pre></div>';
+    } catch(e) { document.getElementById('resultadoCombo').innerHTML = '<p style="color:#C23B22;">Erro.</p>'; }
 }
 </script>
 {% endblock %}

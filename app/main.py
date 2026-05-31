@@ -10,9 +10,14 @@ from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conte
 from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros
 from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar
 from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas
-from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor, checklist, vitrine_api
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor, checklist, vitrine_api, auth
+from .auth.jwt import verificar_token
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor, checklist, vitrine_api, auth, qrcode
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor, checklist, vitrine_api, auth, qrcode, eventos_inteligentes
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor, checklist, vitrine_api, auth, qrcode, eventos_inteligentes, delivery
+from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor, checklist, vitrine_api, auth, qrcode, eventos_inteligentes, delivery, apis_publicas
 from .routers import produtos, chatbot, dashboard, pdv, busca, kits, tags, conteudo, whatsapp, caixa, gatilhos, roteiros, radar, rotas, monitor
-from .services.apis_publicas import APIPublicas
+from .services.apis_publicas import APIsPublicas
 from .services.agente_conteudo import AgenteConteudo
 import os, shutil
 from datetime import datetime
@@ -43,6 +48,11 @@ app.include_router(rotas.router)
 app.include_router(monitor.router)
 app.include_router(checklist.router)
 app.include_router(vitrine_api.router)
+app.include_router(auth.router)
+app.include_router(qrcode.router)
+app.include_router(eventos_inteligentes.router)
+app.include_router(delivery.router)
+app.include_router(apis_publicas.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request): return RedirectResponse(url="/dashboard")
@@ -153,13 +163,13 @@ async def busca_html(request: Request): return templates.TemplateResponse("busca
 async def tela_cliente(request: Request): return templates.TemplateResponse("tela_cliente.html", {"request":request})
 
 @app.get("/api/consultas/cnpj")
-async def consulta_cnpj(cnpj: str = Query(...)): return JSONResponse(await APIPublicas.consultar_cnpj(cnpj))
+async def consulta_cnpj(cnpj: str = Query(...)): return JSONResponse(await APIsPublicas.consultar_cnpj(cnpj))
 
 @app.get("/api/consultas/cep")
-async def consulta_cep(cep: str = Query(...)): return JSONResponse(await APIPublicas.consultar_cep(cep))
+async def consulta_cep(cep: str = Query(...)): return JSONResponse(await APIsPublicas.consultar_cep(cep))
 
 @app.get("/api/consultas/clima")
-async def consulta_clima(cidade: str = Query(...)): return JSONResponse(await APIPublicas.consultar_clima(cidade))
+async def consulta_clima(cidade: str = Query(...)): return JSONResponse(await APIsPublicas.consultar_clima(cidade))
 
 @app.get("/api/pdv/carrinho-ativo")
 async def carrinho_ativo(): return JSONResponse({"itens": [], "total": 0})
@@ -196,6 +206,120 @@ async def checklist_html(request: Request):
 @app.get("/tutorial", response_class=HTMLResponse)
 async def tutorial_html(request: Request):
     return templates.TemplateResponse("tutorial.html", {"request": request})
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/cadastro-evento", response_class=HTMLResponse)
+async def cadastro_evento_page(request: Request):
+    return templates.TemplateResponse("cadastro-evento.html", {"request": request})
+
+@app.post("/api/clientes/cadastro-evento")
+async def cadastro_evento_api(data: dict):
+    db = SessionLocal()
+    nome = data.get("nome", "")
+    telefone = data.get("telefone", "")
+    origem = data.get("origem", "feira")
+    evento = data.get("evento", "QR Code")
+    db.add(Cliente(nome=nome, telefone=telefone, observacoes=f"Origem: {origem} | Evento: {evento}"))
+    db.commit()
+    db.close()
+    return JSONResponse({"sucesso": True})
+
+@app.get("/qrcode", response_class=HTMLResponse)
+async def qrcode_page(request: Request):
+    return templates.TemplateResponse("qrcode.html", {"request": request})
+
+@app.get("/api/eventos/listar")
+async def listar_eventos_api():
+    db = SessionLocal()
+    eventos = db.query(Evento).order_by(Evento.data).all()
+    resultado = []
+    for e in eventos:
+        resultado.append({
+            "id": e.id,
+            "nome": e.nome,
+            "data": str(e.data) if e.data else "",
+            "local": e.local,
+            "tipo": e.tipo,
+            "descricao": e.descricao
+        })
+    db.close()
+    return JSONResponse(resultado)
+
+@app.get("/api/kits/listar")
+async def listar_kits_api():
+    db = SessionLocal()
+    kits_list = db.query(Kit).order_by(Kit.nome).all()
+    resultado = []
+    for k in kits_list:
+        itens = []
+        for item in k.itens:
+            itens.append({
+                "id": item.id,
+                "nome": item.nome,
+                "preco_custo": item.preco_custo,
+                "quantidade": 1
+            })
+        resultado.append({
+            "id": k.id,
+            "nome": k.nome,
+            "descricao": k.descricao,
+            "preco_venda": k.preco_venda,
+            "margem_percentual": k.margem_percentual,
+            "itens": itens
+        })
+    db.close()
+    return JSONResponse(resultado)
+
+@app.get("/static/manifest.json")
+async def manifest():
+    return FileResponse("app/static/manifest.json", media_type="application/json")
+
+@app.get("/api/fornecedores")
+async def listar_fornecedores_api():
+    db = SessionLocal()
+    fornecedores = db.query(Fornecedor).order_by(Fornecedor.nome).all()
+    resultado = []
+    for f in fornecedores:
+        resultado.append({
+            "id": f.id,
+            "nome": f.nome,
+            "cnpj": f.cnpj,
+            "contato": f.contato,
+            "telefone": f.telefone,
+            "email": f.email,
+            "cep": f.cep,
+            "logradouro": f.logradouro,
+            "bairro": f.bairro,
+            "cidade": f.cidade,
+            "uf": f.uf,
+            "observacoes": f.observacoes
+        })
+    db.close()
+    return JSONResponse(resultado)
+
+@app.get("/api/clientes/listar")
+async def listar_clientes_api():
+    db = SessionLocal()
+    clientes = db.query(Cliente).order_by(Cliente.nome).all()
+    resultado = []
+    for c in clientes:
+        resultado.append({
+            "id": c.id,
+            "nome": c.nome,
+            "telefone": c.telefone,
+            "email": c.email,
+            "cpf": c.cpf,
+            "data_nascimento": str(c.data_nascimento) if c.data_nascimento else "",
+            "endereco": c.endereco,
+            "total_compras": c.total_compras,
+            "ultima_compra": str(c.ultima_compra) if c.ultima_compra else "",
+            "observacoes": c.observacoes
+        })
+    db.close()
+    return JSONResponse(resultado)
 
 @app.get("/health")
 async def health_check(): return {"status":"healthy"}

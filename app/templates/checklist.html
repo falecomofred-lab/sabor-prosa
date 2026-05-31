@@ -2,98 +2,85 @@
 {% block content %}
 <h1>✅ Checklist de Feiras</h1>
 
-<div class="card">
-    <h2>📅 Feiras Próximas</h2>
-    <button class="btn" onclick="carregarFeiras()" style="width:100%;">📅 Carregar Feiras</button>
-    <div id="resultadoFeiras" style="margin-top:15px;"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+
+<!-- Coluna Esquerda: Feiras -->
+<div>
+    <div class="card">
+        <h2>📅 Feiras Próximas</h2>
+        <button class="btn" onclick="carregarFeiras()" style="width:100%;">📅 Carregar Feiras</button>
+        <div id="resultadoFeiras" style="margin-top:10px;"></div>
+    </div>
 </div>
 
-<div id="checklistContainer" style="display:none;">
-    <div class="card">
-        <h2>📋 Checklist da Feira</h2>
+<!-- Coluna Direita: Checklist -->
+<div>
+    <div class="card" id="checklistCard" style="display:none;">
+        <h2>📋 Checklist</h2>
         <div id="checklistContent"></div>
-        <button class="btn" onclick="imprimirChecklist()" style="width:100%;margin-top:15px;">🖨️ Imprimir Checklist</button>
+        <button class="btn" onclick="window.print()" style="width:100%;margin-top:15px;">🖨️ Imprimir</button>
     </div>
+</div>
+
 </div>
 
 <script>
 async function carregarFeiras() {
     document.getElementById('resultadoFeiras').innerHTML = '<p>🔍 Buscando feiras próximas...</p>';
     try {
-        const resp = await fetch('/api/checklist/feiras-ativas');
-        const data = await resp.json();
-        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
-        
-        if (data.feiras.length === 0) {
-            html += '<p>Nenhuma feira nos próximos 30 dias.</p>';
-        } else {
-            data.feiras.forEach(f => {
-                const cor = f.urgencia === 'urgente' ? '#C23B22' : f.urgencia === 'atenção' ? '#D4B896' : '#8B6B4A';
-                html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">';
-                html += '<div>';
+        var resp = await fetch('/api/checklist/feiras-ativas'), data = await resp.json();
+        var html = '';
+        if (data.feiras && data.feiras.length) {
+            data.feiras.forEach(function(f) {
+                var cor = f.urgencia === 'urgente' ? '#C23B22' : f.urgencia === 'atenção' ? '#D4B896' : '#8B6B4A';
+                html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;border-left:4px solid ' + cor + ';cursor:pointer;" onclick="carregarChecklist(' + f.id + ')">';
                 html += '<strong>' + f.nome + '</strong><br>';
-                html += '📅 ' + f.data + ' | 📍 ' + f.local + ' | ⏰ ' + f.dias_restantes + ' dias';
-                html += '</div>';
-                html += '<button class="btn" onclick="carregarChecklist(' + f.id + ')" style="white-space:nowrap;">📋 Checklist</button>';
+                html += '📅 ' + f.data + ' | 📍 ' + f.local + ' | ⏰ ' + f.dias_restantes + ' dias<br>';
+                html += '<span style="color:' + cor + ';">Clique para ver o checklist</span>';
                 html += '</div>';
             });
-        }
-        html += '</div>';
+        } else { html = '<p style="color:#8B6B4A;">Nenhuma feira nos próximos 30 dias.</p>'; }
         document.getElementById('resultadoFeiras').innerHTML = html;
-    } catch(e) {
-        document.getElementById('resultadoFeiras').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+    } catch(e) { document.getElementById('resultadoFeiras').innerHTML = '<p style="color:#C23B22;">Erro.</p>'; }
 }
 
 async function carregarChecklist(eventoId) {
-    document.getElementById('checklistContainer').style.display = 'block';
+    document.getElementById('checklistCard').style.display = 'block';
     document.getElementById('checklistContent').innerHTML = '<p>📋 Gerando checklist...</p>';
-    
     try {
-        const resp = await fetch('/api/checklist/feira/' + eventoId);
-        const data = await resp.json();
-        
-        let html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+        var resp = await fetch('/api/checklist/feira/' + eventoId), data = await resp.json();
+        var html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
         html += '<h3>🎪 ' + data.evento + '</h3>';
         html += '<p>📅 ' + data.data + ' | 📍 ' + data.local + ' | ⏰ Faltam ' + data.dias_restantes + ' dias</p>';
         
-        data.categorias.forEach(cat => {
+        var totalItems = 0;
+        data.categorias.forEach(function(cat) {
             html += '<h4 style="color:#D4B896;margin-top:15px;">' + cat.categoria + '</h4>';
-            cat.itens.forEach((item, i) => {
-                const cor = item.prioridade === 'alta' ? '#C23B22' : item.prioridade === 'media' ? '#D4B896' : '#8B6B4A';
+            cat.itens.forEach(function(item, i) {
+                totalItems++;
+                var cor = item.prioridade === 'alta' ? '#C23B22' : item.prioridade === 'media' ? '#D4B896' : '#8B6B4A';
                 html += '<div style="padding:8px;margin:3px 0;background:#3E3526;border-radius:8px;display:flex;align-items:center;gap:10px;">';
-                html += '<input type="checkbox" id="item_' + i + '" onchange="atualizarProgresso()" style="width:20px;height:20px;">';
+                html += '<input type="checkbox" id="item_' + totalItems + '" onchange="atualizarProgresso()" style="width:18px;height:18px;">';
                 html += '<span style="flex:1;">' + item.item + '</span>';
-                html += '<span style="color:' + cor + ';font-size:0.8em;">' + item.prioridade + '</span>';
+                html += '<span style="color:' + cor + ';font-size:0.75em;">' + item.prioridade + '</span>';
                 html += '</div>';
             });
         });
         
-        html += '<h4 style="color:#D4B896;margin-top:15px;">💡 Dicas</h4>';
-        data.dicas.forEach(d => {
-            html += '<p style="padding:5px;margin:2px 0;">• ' + d + '</p>';
-        });
-        
-        html += '<div style="margin-top:10px;text-align:center;">';
+        html += '<div style="margin-top:15px;text-align:center;">';
         html += '<span id="progressoTexto" style="color:#4CAF50;">0% concluído</span>';
-        html += '</div>';
+        html += '</div></div>';
         
-        html += '</div>';
         document.getElementById('checklistContent').innerHTML = html;
-    } catch(e) {
-        document.getElementById('checklistContent').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
-    }
+    } catch(e) { document.getElementById('checklistContent').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>'; }
 }
 
 function atualizarProgresso() {
-    const total = document.querySelectorAll('#checklistContent input[type=checkbox]').length;
-    const marcados = document.querySelectorAll('#checklistContent input[type=checkbox]:checked').length;
-    const percent = total > 0 ? Math.round((marcados / total) * 100) : 0;
-    document.getElementById('progressoTexto').textContent = percent + '% concluído (' + marcados + '/' + total + ')';
-}
-
-function imprimirChecklist() {
-    window.print();
+    var total = document.querySelectorAll('#checklistContent input[type=checkbox]').length;
+    var marcados = document.querySelectorAll('#checklistContent input[type=checkbox]:checked').length;
+    var percent = total > 0 ? Math.round((marcados / total) * 100) : 0;
+    var el = document.getElementById('progressoTexto');
+    if (el) el.textContent = percent + '% concluído (' + marcados + '/' + total + ')';
 }
 </script>
 {% endblock %}

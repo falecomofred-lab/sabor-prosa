@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     JWT_EXPIRATION_MINUTES: int = 1440
     ANTHROPIC_API_KEY: str = ""
     AI_MODEL: str = "claude-sonnet-4-5-20250929"
+    GOOGLE_MAPS_API_KEY: str = ""
     APP_NAME: str = "Sabor e Prosa Empório API"
     APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
@@ -15,7 +16,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
-
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()

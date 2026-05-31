@@ -1,34 +1,294 @@
 ﻿{% extends "base.html" %}
 {% block content %}
-<h1>🛒 PDV</h1>
-<div class="card"><h2>⭐ Mais Vendidos</h2><div id="favoritos" style="display:flex;gap:10px;overflow-x:auto;padding:10px 0;"></div></div>
-<div class="card"><h2>📷 Código de Barras</h2><input id="codigoInput" placeholder="Escaneie..." onkeypress="if(event.key==='Enter')adicionarPorCodigo()"></div>
-<div class="card"><h2>🧾 Carrinho</h2><div id="carrinho" style="min-height:100px;"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:15px;">
-        <h3>Total: <span id="totalCarrinho" style="color:#D4B896;">R$ 0,00</span></h3>
-        <div><button class="btn" onclick="pausarVenda()" style="background:#5C4A37;">⏸️ Pausar</button><button class="btn" onclick="abrirPagamento()">💰 Finalizar</button></div>
+<h1>🛒 Ponto de Venda</h1>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:15px;">
+
+<div>
+    <!-- Quick Keys -->
+    <div class="card">
+        <h2>⭐ Mais Vendidos</h2>
+        <div id="favoritos" style="display:flex;gap:8px;overflow-x:auto;padding:5px 0;"></div>
+    </div>
+    
+    <!-- Busca + Scanner -->
+    <div class="card">
+        <div style="position:relative;">
+            <div style="display:flex;gap:8px;">
+                <input id="buscaInput" placeholder="🔍 Digite código ou nome do produto..." oninput="buscarSugestoes()" onkeypress="if(event.key==='Enter')selecionarPrimeiro()" style="flex:1;font-size:1em;" autocomplete="off">
+                <button class="btn" onclick="toggleScanner()" id="btnScanner" style="white-space:nowrap;">📷</button>
+                <button onclick="document.getElementById('buscaInput').value='';document.getElementById('sugestoes').style.display='none';" style="background:none;border:none;color:#8B6B4A;cursor:pointer;font-size:1.2em;position:absolute;right:50px;top:10px;">✕</button>
+            </div>
+            <div id="sugestoes" style="position:absolute;top:100%;left:0;right:0;background:#2A1F14;border:1px solid #5C4A37;border-radius:8px;z-index:50;display:none;max-height:250px;overflow-y:auto;"></div>
+        </div>
+        
+        <!-- Área do Scanner -->
+        <div id="scannerArea" style="display:none;margin-top:10px;text-align:center;">
+            <div id="reader" style="width:100%;max-width:400px;margin:0 auto;"></div>
+            <p id="scanStatus" style="color:#8B6B4A;margin-top:5px;">Aponte para o código de barras</p>
+            <button class="btn btn-outline" onclick="toggleScanner()" style="margin-top:5px;">Fechar Scanner</button>
+        </div>
+    </div>
+    
+    <!-- Carrinho -->
+    <div class="card">
+        <h2>🧾 Carrinho Atual</h2>
+        <div id="carrinho" style="min-height:150px;">
+            <p style="color:#8B6B4A;text-align:center;padding:30px;">Nenhum item no carrinho</p>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:15px;border-top:1px solid #5C4A37;">
+            <h3>Total: <span id="totalCarrinho" style="color:#D4B896;">R$ 0,00</span></h3>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-outline" onclick="pausarVenda()">⏸️ Pausar</button>
+                <button class="btn" onclick="abrirPagamento()">💰 Finalizar</button>
+            </div>
+        </div>
     </div>
 </div>
+
+<div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:3em;" id="totalPagamentoDisplay">R$ 0,00</div>
+        <div style="color:#8B6B4A;font-size:0.85em;" id="qtdItens">0 itens</div>
+    </div>
+    <div class="card" id="sugestaoIA" style="display:none;">
+        <h2>💡 Sugestão</h2>
+        <p id="textoSugestao" style="color:#D4B896;"></p>
+    </div>
+</div>
+
+</div>
+
+<!-- Modal Pagamento -->
 <div id="modalPagamento" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center;">
-    <div style="background:#2A1F14;padding:30px;border-radius:16px;width:90%;max-width:400px;">
-        <h2>💵 Pagamento</h2><p>Total: <strong id="totalPagamento" style="font-size:1.5em;color:#D4B896;">R$ 0,00</strong></p>
-        <input id="valorRecebido" type="number" step="0.01" oninput="calcularTroco()" style="font-size:2em;text-align:center;">
-        <div id="trocoDisplay" style="font-size:3em;text-align:center;color:#4CAF50;font-weight:bold;min-height:60px;"></div>
-        <button class="btn" onclick="finalizarVenda()" style="width:100%;font-size:1.2em;">✅ Confirmar</button>
-        <button class="btn" onclick="document.getElementById('modalPagamento').style.display='none'" style="width:100%;background:#5C4A37;margin-top:5px;">Cancelar</button>
+    <div style="background:#2A1F14;padding:30px;border-radius:16px;width:90%;max-width:400px;text-align:center;">
+        <h2>💵 Pagamento</h2>
+        <p style="font-size:1.2em;margin:10px 0;">Total: <strong id="totalPagamento" style="color:#D4B896;">R$ 0,00</strong></p>
+        <input id="valorRecebido" type="number" step="0.01" placeholder="Valor recebido" oninput="calcularTroco()" style="font-size:2em;text-align:center;width:100%;margin:10px 0;">
+        <div id="trocoDisplay" style="font-size:3em;color:#4CAF50;font-weight:bold;min-height:60px;"></div>
+        <button class="btn" onclick="finalizarVenda()" style="width:100%;font-size:1.2em;margin-top:10px;">✅ Confirmar</button>
+        <button class="btn btn-outline" onclick="document.getElementById('modalPagamento').style.display='none'" style="width:100%;margin-top:5px;">Cancelar</button>
     </div>
 </div>
+
+<!-- Biblioteca do Scanner -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script>
-let carrinho=[];
-fetch('/api/pdv/favoritos').then(r=>r.json()).then(p=>{document.getElementById('favoritos').innerHTML=p.map(x=>'<div onclick="add('+x.id+',\''+x.nome+'\','+x.preco+')" style="background:#3E3526;border-radius:12px;padding:15px;cursor:pointer;min-width:120px;text-align:center;"><div style="font-size:2em;">📦</div><div>'+x.nome.substring(0,15)+'</div><div style="color:#8B6B4A;">R$ '+x.preco.toFixed(2)+'</div></div>').join('');});
-function add(id,nome,preco){const i=carrinho.find(x=>x.id===id);i?i.qtd++:carrinho.push({id,nome,preco,qtd:1});render();verificarHarmonizacao(id);}
-function adicionarPorCodigo(){fetch('/api/pdv/buscar?codigo='+document.getElementById('codigoInput').value).then(r=>r.json()).then(p=>{if(!p.erro){add(p.id,p.nome,p.preco);document.getElementById('codigoInput').value='';}});}
-function render(){let t=0;document.getElementById('carrinho').innerHTML=carrinho.map((x,i)=>{t+=x.preco*x.qtd;return'<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #5C4A37;"><span>'+x.nome+' x'+x.qtd+'</span><span>R$ '+(x.preco*x.qtd).toFixed(2)+' <button onclick="carrinho.splice('+i+',1);render();" style="background:none;border:none;color:#C23B22;cursor:pointer;">✕</button></span></div>';}).join('');document.getElementById('totalCarrinho').textContent='R$ '+t.toFixed(2);}
-function abrirPagamento(){if(!carrinho.length)return alert('Carrinho vazio!');document.getElementById('totalPagamento').textContent='R$ '+carrinho.reduce((s,x)=>s+x.preco*x.qtd,0).toFixed(2);document.getElementById('modalPagamento').style.display='flex';}
-function calcularTroco(){const t=carrinho.reduce((s,x)=>s+x.preco*x.qtd,0);const r=parseFloat(document.getElementById('valorRecebido').value)||0;document.getElementById('trocoDisplay').textContent=r>=t?'Troco: R$ '+(r-t).toFixed(2):'';}
-async function finalizarVenda(){const t=carrinho.reduce((s,x)=>s+x.preco*x.qtd,0);const r=parseFloat(document.getElementById('valorRecebido').value)||0;if(r<t)return alert('Insuficiente!');await fetch('/api/pdv/vender',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:carrinho})});alert('Venda finalizada! Troco: R$ '+(r-t).toFixed(2));carrinho=[];document.getElementById('modalPagamento').style.display='none';render();}
-function pausarVenda(){if(!carrinho.length)return;localStorage.setItem('vendaPausada',JSON.stringify(carrinho));carrinho=[];render();alert('Venda pausada!');}
-async function verificarHarmonizacao(pid){try{const r=await fetch('/api/pdv/sugestao?produto_id='+pid);const d=await r.json();if(d.sugestao){const t=document.createElement('div');t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:12px 20px;border-radius:12px;z-index:3000;';t.textContent='💡 '+d.sugestao;document.body.appendChild(t);setTimeout(()=>t.remove(),5000);}}catch(e){}}
-window.onload=()=>{const s=localStorage.getItem('vendaPausada');if(s&&confirm('Retomar venda pausada?')){carrinho=JSON.parse(s);localStorage.removeItem('vendaPausada');render();}};
+let carrinho = [];
+let todosProdutos = [];
+let timeoutBusca = null;
+let scannerAtivo = false;
+let html5QrCode = null;
+
+// Carregar todos os produtos para busca
+fetch('/api/produtos/').then(r => r.json()).then(data => {
+    todosProdutos = data.filter(p => p.estoque_atual > 0);
+});
+
+// Carregar favoritos
+fetch('/api/pdv/favoritos').then(r => r.json()).then(p => {
+    document.getElementById('favoritos').innerHTML = p.map(x => 
+        '<div onclick="add(' + x.id + ',\'' + x.nome + '\',' + x.preco + ')" style="background:#3E3526;border-radius:10px;padding:12px 15px;cursor:pointer;min-width:110px;text-align:center;white-space:nowrap;">' +
+        '<div style="font-size:1.8em;">📦</div><div style="font-weight:bold;font-size:0.85em;">' + x.nome.substring(0,12) + '</div>' +
+        '<div style="color:#8B6B4A;font-size:0.85em;">R$ ' + x.preco.toFixed(2) + '</div></div>'
+    ).join('');
+});
+
+// ========== SCANNER DE CÓDIGO DE BARRAS NATIVO ==========
+function toggleScanner() {
+    const area = document.getElementById('scannerArea');
+    const btn = document.getElementById('btnScanner');
+    
+    if (scannerAtivo) {
+        // Parar scanner
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                area.style.display = 'none';
+                btn.textContent = '📷';
+                btn.style.background = '#8B6B4A';
+                scannerAtivo = false;
+            });
+        }
+    } else {
+        // Iniciar scanner
+        area.style.display = 'block';
+        btn.textContent = '⏹️';
+        btn.style.background = '#C23B22';
+        scannerAtivo = true;
+        
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, // Câmera traseira
+            config,
+            onScanSuccess,
+            onScanFailure
+        ).catch(err => {
+            document.getElementById('scanStatus').textContent = 'Erro: ' + err;
+        });
+    }
+}
+
+function onScanSuccess(decodedText) {
+    // Tocar bip
+    tocarBip();
+    
+    // Buscar produto pelo código escaneado
+    const produto = todosProdutos.find(p => p.codigo_barras === decodedText);
+    if (produto) {
+        add(produto.id, produto.nome, produto.preco_venda);
+        document.getElementById('scanStatus').textContent = '✅ ' + produto.nome + ' adicionado!';
+        document.getElementById('scanStatus').style.color = '#4CAF50';
+    } else {
+        document.getElementById('scanStatus').textContent = '❌ Código não encontrado: ' + decodedText;
+        document.getElementById('scanStatus').style.color = '#C23B22';
+    }
+    
+    // Pequena pausa para não adicionar duplicado
+    setTimeout(() => {
+        document.getElementById('scanStatus').textContent = 'Aponte para o código de barras';
+        document.getElementById('scanStatus').style.color = '#8B6B4A';
+    }, 1500);
+}
+
+function onScanFailure(error) {
+    // Ignorar erros de leitura (normal durante o scanning)
+}
+
+// Bip sonoro nativo (Web Audio API)
+function tocarBip() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.value = 850;
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.1);
+    } catch(e) {}
+}
+
+// ========== BUSCA ==========
+function buscarSugestoes() {
+    clearTimeout(timeoutBusca);
+    const termo = document.getElementById('buscaInput').value.trim();
+    const div = document.getElementById('sugestoes');
+    
+    if (termo.length < 1) { div.style.display = 'none'; return; }
+    
+    const resultados = todosProdutos.filter(p => 
+        p.nome.toLowerCase().includes(termo.toLowerCase()) ||
+        (p.codigo_barras && p.codigo_barras.includes(termo))
+    ).slice(0, 8);
+    
+    if (resultados.length === 0) {
+        div.innerHTML = '<div style="padding:12px;color:#8B6B4A;">Nenhum produto encontrado</div>';
+    } else {
+        div.innerHTML = resultados.map(p => 
+            '<div onclick="add(' + p.id + ',\'' + p.nome + '\',' + p.preco_venda + ');document.getElementById(\'buscaInput\').value=\'\';div.style.display=\'none\';" style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #5C4A37;" onmouseover="this.style.background=\'#4A3C2C\'" onmouseout="this.style.background=\'transparent\'">' +
+            '<span>' + p.nome + ' <span style="color:#8B6B4A;font-size:0.85em;">(' + (p.codigo_barras || 'sem código') + ')</span></span>' +
+            '<span style="color:#D4B896;font-weight:bold;">R$ ' + p.preco_venda.toFixed(2) + '</span></div>'
+        ).join('');
+    }
+    div.style.display = 'block';
+}
+
+function selecionarPrimeiro() {
+    const termo = document.getElementById('buscaInput').value.trim();
+    if (!termo) return;
+    const resultado = todosProdutos.find(p => p.codigo_barras === termo || p.nome.toLowerCase().includes(termo.toLowerCase()));
+    if (resultado) {
+        add(resultado.id, resultado.nome, resultado.preco_venda);
+        document.getElementById('buscaInput').value = '';
+        document.getElementById('sugestoes').style.display = 'none';
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#buscaInput') && !e.target.closest('#sugestoes')) {
+        document.getElementById('sugestoes').style.display = 'none';
+    }
+});
+
+// ========== CARRINHO ==========
+function add(id, nome, preco) {
+    const item = carrinho.find(x => x.id === id);
+    if (item) item.qtd++; else carrinho.push({id, nome, preco, qtd: 1});
+    render(); verificarSugestao(id);
+}
+
+function render() {
+    const div = document.getElementById('carrinho');
+    let total = 0;
+    if (carrinho.length === 0) {
+        div.innerHTML = '<p style="color:#8B6B4A;text-align:center;padding:30px;">Nenhum item no carrinho</p>';
+    } else {
+        div.innerHTML = '<table>' + carrinho.map((x, i) => {
+            const subtotal = x.preco * x.qtd; total += subtotal;
+            return '<tr><td>' + x.nome + '</td><td style="text-align:center;">' +
+                '<button onclick="carrinho[' + i + '].qtd = Math.max(1, carrinho[' + i + '].qtd - 1); render();" style="background:#3E3526;border:none;color:white;width:25px;height:25px;border-radius:50%;cursor:pointer;">−</button> ' +
+                x.qtd + ' <button onclick="carrinho[' + i + '].qtd++; render();" style="background:#3E3526;border:none;color:white;width:25px;height:25px;border-radius:50%;cursor:pointer;">+</button></td>' +
+                '<td style="text-align:right;">R$ ' + subtotal.toFixed(2) + '</td>' +
+                '<td><button onclick="carrinho.splice(' + i + ',1); render();" style="background:none;border:none;color:#C23B22;cursor:pointer;">✕</button></td></tr>';
+        }).join('') + '</table>';
+    }
+    document.getElementById('totalCarrinho').textContent = 'R$ ' + total.toFixed(2);
+    document.getElementById('totalPagamentoDisplay').textContent = 'R$ ' + total.toFixed(2);
+    document.getElementById('qtdItens').textContent = carrinho.length + ' itens';
+}
+
+async function verificarSugestao(pid) {
+    try {
+        const r = await fetch('/api/pdv/sugestao?produto_id=' + pid);
+        const d = await r.json();
+        if (d.sugestao) {
+            document.getElementById('sugestaoIA').style.display = 'block';
+            document.getElementById('textoSugestao').textContent = d.sugestao;
+        }
+    } catch(e) {}
+}
+
+function abrirPagamento() {
+    if (!carrinho.length) return alert('Carrinho vazio!');
+    document.getElementById('totalPagamento').textContent = 'R$ ' + carrinho.reduce((s,x) => s + x.preco * x.qtd, 0).toFixed(2);
+    document.getElementById('modalPagamento').style.display = 'flex';
+    document.getElementById('valorRecebido').focus();
+}
+
+function calcularTroco() {
+    const total = carrinho.reduce((s,x) => s + x.preco * x.qtd, 0);
+    const recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+    const troco = recebido - total;
+    document.getElementById('trocoDisplay').textContent = troco >= 0 ? 'Troco: R$ ' + troco.toFixed(2) : 'Valor insuficiente';
+    document.getElementById('trocoDisplay').style.color = troco >= 0 ? '#4CAF50' : '#C23B22';
+}
+
+async function finalizarVenda() {
+    const total = carrinho.reduce((s,x) => s + x.preco * x.qtd, 0);
+    const recebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+    if (recebido < total) return alert('Valor insuficiente!');
+    await fetch('/api/pdv/vender', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({itens:carrinho})});
+    alert('Venda finalizada! Troco: R$ ' + (recebido - total).toFixed(2));
+    carrinho = []; document.getElementById('modalPagamento').style.display = 'none'; render();
+}
+
+function pausarVenda() {
+    if (!carrinho.length) return;
+    localStorage.setItem('vendaPausada', JSON.stringify(carrinho));
+    carrinho = []; render(); alert('Venda pausada!');
+}
+
+window.onload = () => {
+    const saved = localStorage.getItem('vendaPausada');
+    if (saved && confirm('Existe uma venda pausada. Retomar?')) {
+        carrinho = JSON.parse(saved); localStorage.removeItem('vendaPausada'); render();
+    }
+};
 </script>
 {% endblock %}

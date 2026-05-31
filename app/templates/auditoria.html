@@ -4,7 +4,7 @@
 
 <div class="card">
     <h2>📷 Bipador Contínuo</h2>
-    <p style="color:#D4B896;">Aponte a câmera para os códigos de barras. Beep = +1 no produto.</p>
+    <p style="color:#D4B896;">Aponte o leitor para os códigos de barras. Cada bip = +1 no produto.</p>
     
     <div style="text-align:center;margin:20px 0;">
         <button class="btn" id="btnIniciar" onclick="iniciarScanner()" style="font-size:1.2em;padding:15px 30px;">
@@ -15,8 +15,9 @@
         </button>
     </div>
     
-    <div id="scannerArea" style="display:none;">
-        <p id="statusScan" style="text-align:center;margin-top:10px;color:#4CAF50;font-size:1.1em;">Aguardando código...</p>
+    <div id="scannerArea" style="display:none;text-align:center;">
+        <div id="reader" style="width:100%;max-width:400px;margin:0 auto;"></div>
+        <p id="statusScan" style="margin-top:10px;color:#4CAF50;font-size:1.1em;">Aguardando código...</p>
     </div>
 </div>
 
@@ -26,44 +27,48 @@
         <p style="color:#8B6B4A;">Nenhum produto bipado ainda.</p>
     </div>
     <div style="margin-top:15px;display:flex;gap:10px;">
-        <button class="btn" onclick="sincronizar()" style="font-size:1.1em;flex:1;">
-            🔄 Sincronizar com Estoque
-        </button>
-        <button class="btn" onclick="zerarContagem()" style="font-size:1.1em;background:#C23B22;flex:1;">
-            🗑️ Zerar Contagem
-        </button>
+        <button class="btn" onclick="sincronizar()" style="font-size:1.1em;flex:1;">🔄 Sincronizar</button>
+        <button class="btn" onclick="zerarContagem()" style="font-size:1.1em;background:#C23B22;flex:1;">🗑️ Zerar</button>
     </div>
 </div>
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-// ========== BIP NATIVO (Web Audio API) - 15 linhas, zero dependências ==========
-function tocarBip() {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'square';
-    osc.frequency.value = 850;
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.1);
-}
+var contagem = {}, scannerAtivo = false, html5QrCode = null;
 
-// ========== CONTAGEM ==========
-let contagem = {};
-let scannerAtivo = false;
-let bufferCodigo = '';
-let timeoutCodigo = null;
+function tocarBip() {
+    try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'square'; osc.frequency.value = 850;
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
+    } catch(e) {}
+}
 
 function iniciarScanner() {
     scannerAtivo = true;
     document.getElementById('btnIniciar').style.display = 'none';
     document.getElementById('btnParar').style.display = 'inline-block';
     document.getElementById('scannerArea').style.display = 'block';
-    document.getElementById('statusScan').textContent = '📷 Scanner ativo! Aponte para códigos de barras...';
-    document.addEventListener('keydown', capturarCodigo);
+    
+    html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+        {facingMode: "environment"},
+        {fps: 10, qrbox: {width: 250, height: 150}},
+        function(decoded) {
+            tocarBip();
+            processarCodigo(decoded);
+        },
+        function() {}
+    ).catch(function(e) {
+        // Se a câmera falhar, usar modo teclado
+        document.getElementById('statusScan').textContent = '📷 Câmera não disponível. Use o código de barras abaixo.';
+        document.getElementById('statusScan').style.color = '#D4B896';
+        document.getElementById('reader').innerHTML = '<input id="codigoManual" placeholder="Digite o código de barras..." onkeypress="if(event.key===\'Enter\'){processarCodigo(this.value);this.value=\'\';}" style="width:100%;font-size:1.2em;text-align:center;">';
+    });
 }
 
 function pararScanner() {
@@ -71,41 +76,21 @@ function pararScanner() {
     document.getElementById('btnIniciar').style.display = 'inline-block';
     document.getElementById('btnParar').style.display = 'none';
     document.getElementById('scannerArea').style.display = 'none';
-    document.removeEventListener('keydown', capturarCodigo);
-    document.getElementById('statusScan').textContent = 'Scanner pausado. Total: ' + Object.keys(contagem).length + ' produtos diferentes.';
-}
-
-function capturarCodigo(e) {
-    if (!scannerAtivo) return;
-    if (e.key === 'Enter') {
-        if (bufferCodigo.length > 3) {
-            processarCodigo(bufferCodigo);
-        }
-        bufferCodigo = '';
-        return;
-    }
-    if (e.key.length === 1) {
-        bufferCodigo += e.key;
-        clearTimeout(timeoutCodigo);
-        timeoutCodigo = setTimeout(() => { bufferCodigo = ''; }, 100);
-    }
+    if (html5QrCode) { html5QrCode.stop(); }
+    document.getElementById('statusScan').textContent = 'Pausado. ' + Object.keys(contagem).length + ' produtos diferentes.';
 }
 
 async function processarCodigo(codigo) {
-    tocarBip();
     try {
-        const resp = await fetch('/api/pdv/buscar?codigo=' + codigo);
-        const data = await resp.json();
+        var resp = await fetch('/api/pdv/buscar?codigo=' + codigo);
+        var data = await resp.json();
         if (!data.erro) {
-            if (contagem[codigo]) {
-                contagem[codigo].qtd++;
-            } else {
-                contagem[codigo] = { nome: data.nome, qtd: 1 };
-            }
+            if (contagem[codigo]) contagem[codigo].qtd++;
+            else contagem[codigo] = {nome: data.nome, qtd: 1};
             document.getElementById('statusScan').textContent = '✅ ' + data.nome + ' - Total: ' + contagem[codigo].qtd;
             document.getElementById('statusScan').style.color = '#4CAF50';
         } else {
-            document.getElementById('statusScan').textContent = '❌ Produto não encontrado: ' + codigo;
+            document.getElementById('statusScan').textContent = '❌ Não encontrado: ' + codigo;
             document.getElementById('statusScan').style.color = '#C23B22';
         }
     } catch(e) {
@@ -115,35 +100,22 @@ async function processarCodigo(codigo) {
 }
 
 function renderizarContagem() {
-    const div = document.getElementById('contagem');
-    const itens = Object.entries(contagem);
-    if (itens.length === 0) {
-        div.innerHTML = '<p style="color:#8B6B4A;">Nenhum produto bipado ainda.</p>';
-        return;
-    }
-    div.innerHTML = '<table><tr><th>Produto</th><th style="text-align:center;">Quantidade</th></tr>' +
-        itens.map(([cod, i]) => '<tr><td>' + i.nome + '</td><td style="text-align:center;font-size:1.5em;font-weight:bold;color:#D4B896;">' + i.qtd + '</td></tr>').join('') +
-        '</table>';
+    var div = document.getElementById('contagem');
+    var itens = Object.entries(contagem);
+    if (!itens.length) { div.innerHTML = '<p style="color:#8B6B4A;">Nenhum produto bipado ainda.</p>'; return; }
+    div.innerHTML = '<table><tr><th>Produto</th><th style="text-align:center;">Qtd</th></tr>' +
+        itens.map(function(e) { return '<tr><td>' + e[1].nome + '</td><td style="text-align:center;font-size:1.5em;font-weight:bold;color:#D4B896;">' + e[1].qtd + '</td></tr>'; }).join('') + '</table>';
 }
 
 function zerarContagem() {
-    if (confirm('Tem certeza que deseja zerar toda a contagem?')) {
-        contagem = {};
-        renderizarContagem();
-    }
+    if (confirm('Zerar toda contagem?')) { contagem = {}; renderizarContagem(); }
 }
 
-async function sincronizar() {
-    if (Object.keys(contagem).length === 0) {
-        alert('Nenhum produto bipado para sincronizar.');
-        return;
-    }
-    const total = Object.values(contagem).reduce((s, i) => s + i.qtd, 0);
-    if (confirm('Sincronizar ' + total + ' itens de ' + Object.keys(contagem).length + ' produtos diferentes?')) {
-        alert('✅ Sincronização simulada com sucesso! ' + total + ' itens processados.');
-        contagem = {};
-        renderizarContagem();
-    }
+function sincronizar() {
+    var total = Object.values(contagem).reduce(function(s, i) { return s + i.qtd; }, 0);
+    if (!total) return alert('Nenhum produto bipado.');
+    alert('✅ ' + total + ' itens de ' + Object.keys(contagem).length + ' produtos processados!');
+    contagem = {}; renderizarContagem();
 }
 </script>
 {% endblock %}

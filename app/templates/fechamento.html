@@ -2,90 +2,133 @@
 {% block content %}
 <h1>💰 Fechamento de Caixa</h1>
 
-<div class="card">
-    <h2>🔒 Modo Cego</h2>
-    <p style="color:#D4B896;">Informe os valores contados. O sistema compara com o PDV e a IA analisa.</p>
-    
-    <div class="form-group">
-        <label>💵 Dinheiro Físico (R$)</label>
-        <input id="dinheiro" type="number" step="0.01" placeholder="0.00" style="font-size:1.5em;text-align:center;" oninput="atualizarTotal()">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+
+<!-- Coluna Esquerda: Entrada de Valores -->
+<div>
+    <div class="card">
+        <h2>🔒 Modo Cego</h2>
+        <p style="color:#D4B896;">Informe os valores contados. O sistema compara com o PDV.</p>
+        
+        <div class="form-group">
+            <label>💵 Dinheiro Físico (R$)</label>
+            <input id="dinheiro" type="number" step="0.01" placeholder="0.00" oninput="atualizarTotal()" style="font-size:1.5em;text-align:center;">
+        </div>
+        <div class="form-group">
+            <label>💳 Cartão (R$)</label>
+            <input id="cartao" type="number" step="0.01" placeholder="0.00" oninput="atualizarTotal()" style="font-size:1.5em;text-align:center;">
+        </div>
+        <div class="form-group">
+            <label>📱 Pix (R$)</label>
+            <input id="pix" type="number" step="0.01" placeholder="0.00" oninput="atualizarTotal()" style="font-size:1.5em;text-align:center;">
+        </div>
+        
+        <div style="text-align:center;margin:20px 0;">
+            <h3>Total Informado</h3>
+            <span id="totalInformado" style="font-size:3em;font-weight:bold;color:#D4B896;">R$ 0,00</span>
+        </div>
+        
+        <button class="btn" onclick="enviarFechamento()" style="width:100%;font-size:1.2em;padding:15px;">
+            🔒 Confirmar Fechamento
+        </button>
     </div>
-    
-    <div class="form-group">
-        <label>💳 Cartão Débito/Crédito (R$)</label>
-        <input id="cartao" type="number" step="0.01" placeholder="0.00" style="font-size:1.5em;text-align:center;" oninput="atualizarTotal()">
-    </div>
-    
-    <div class="form-group">
-        <label>📱 Pix (R$)</label>
-        <input id="pix" type="number" step="0.01" placeholder="0.00" style="font-size:1.5em;text-align:center;" oninput="atualizarTotal()">
-    </div>
-    
-    <div style="text-align:center;margin:20px 0;">
-        <h3>Total Informado:</h3>
-        <span id="totalInformado" style="font-size:3em;font-weight:bold;color:#D4B896;">R$ 0,00</span>
-    </div>
-    
-    <button class="btn" onclick="enviarFechamento()" style="width:100%;font-size:1.2em;padding:15px;">
-        🔒 Confirmar Fechamento
-    </button>
 </div>
 
-<div class="card" id="resultadoCard" style="display:none;">
-    <h2>📊 Resultado</h2>
-    <div id="resultadoConteudo"></div>
+<!-- Coluna Direita: Resultado -->
+<div>
+    <div class="card" id="resultadoCard" style="display:none;">
+        <h2>📊 Resultado</h2>
+        <div id="resultadoConteudo"></div>
+    </div>
+    
+    <div class="card">
+        <h2>📋 Histórico Rápido</h2>
+        <div style="background:#2A1F14;padding:12px;border-radius:8px;">
+            <p>📅 <strong>Últimos Fechamentos</strong></p>
+            <div id="historicoFechamento">
+                <p style="color:#8B6B4A;">Nenhum registro anterior.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>💡 Dicas</h2>
+        <div style="background:#2A1F14;padding:12px;border-radius:8px;">
+            <p>✅ Confira o troco do dia</p>
+            <p>✅ Verifique vendas pausadas</p>
+            <p>✅ Confira pagamentos via Pix</p>
+            <p>✅ Anote despesas do dia</p>
+        </div>
+    </div>
+</div>
+
 </div>
 
 <script>
 function atualizarTotal() {
-    const din = parseFloat(document.getElementById('dinheiro').value) || 0;
-    const car = parseFloat(document.getElementById('cartao').value) || 0;
-    const pix = parseFloat(document.getElementById('pix').value) || 0;
-    const total = din + car + pix;
-    document.getElementById('totalInformado').textContent = 'R$ ' + total.toFixed(2);
+    var din = parseFloat(document.getElementById('dinheiro').value) || 0;
+    var car = parseFloat(document.getElementById('cartao').value) || 0;
+    var pix = parseFloat(document.getElementById('pix').value) || 0;
+    document.getElementById('totalInformado').textContent = 'R$ ' + (din + car + pix).toFixed(2);
 }
 
 async function enviarFechamento() {
-    const din = parseFloat(document.getElementById('dinheiro').value) || 0;
-    const car = parseFloat(document.getElementById('cartao').value) || 0;
-    const pix = parseFloat(document.getElementById('pix').value) || 0;
+    var din = parseFloat(document.getElementById('dinheiro').value) || 0;
+    var car = parseFloat(document.getElementById('cartao').value) || 0;
+    var pix = parseFloat(document.getElementById('pix').value) || 0;
     
-    if (din + car + pix === 0) {
-        alert('Informe pelo menos um valor!');
-        return;
-    }
+    if (din + car + pix === 0) { alert('Informe pelo menos um valor!'); return; }
     
     document.getElementById('resultadoCard').style.display = 'block';
-    document.getElementById('resultadoConteudo').innerHTML = '<p style="text-align:center;">🔍 Analisando com IA...</p>';
+    document.getElementById('resultadoConteudo').innerHTML = '<p style="text-align:center;">🔍 Analisando...</p>';
     
     try {
-        const resp = await fetch('/api/caixa/fechamento', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({dinheiro: din, cartao: car, pix: pix})
+        var resp = await fetch('/api/caixa/fechamento', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({dinheiro:din, cartao:car, pix:pix})
         });
-        const data = await resp.json();
+        var data = await resp.json();
         
-        let html = '<table>';
+        var html = '<div style="background:#2A1F14;padding:12px;border-radius:8px;">';
+        html += '<table>';
         html += '<tr><td>Total Informado:</td><td style="color:#D4B896;">R$ ' + data.total_informado.toFixed(2) + '</td></tr>';
         html += '<tr><td>Total PDV:</td><td style="color:#D4B896;">R$ ' + data.total_registrado.toFixed(2) + '</td></tr>';
-        html += '<tr><td>Diferença:</td><td style="color:' + (data.status === 'ok' ? '#4CAF50' : '#C23B22') + ';font-weight:bold;">R$ ' + data.diferenca.toFixed(2) + '</td></tr>';
+        html += '<tr><td>Diferença:</td><td style="color:' + (data.status === 'ok' ? '#4CAF50' : '#C23B22') + ';font-weight:bold;font-size:1.2em;">R$ ' + data.diferenca.toFixed(2) + '</td></tr>';
         html += '</table>';
         
         if (data.diagnostico) {
-            html += '<div class="card" style="background:#2A1F14;margin-top:15px;"><h3>🤖 Diagnóstico da IA</h3><p>' + data.diagnostico + '</p></div>';
+            html += '<div style="background:#3E3526;padding:10px;border-radius:8px;margin-top:10px;"><h4>🤖 Diagnóstico IA</h4><p>' + data.diagnostico + '</p></div>';
         }
         
-        if (data.status === 'ok') {
-            html += '<p style="text-align:center;color:#4CAF50;font-size:1.5em;">✅ Caixa Fechado!</p>';
-        } else {
-            html += '<p style="text-align:center;color:#C23B22;font-size:1.5em;">⚠️ Divergência Detectada</p>';
-        }
+        html += '<div style="text-align:center;margin-top:15px;">';
+        html += data.status === 'ok' ? '<span style="color:#4CAF50;font-size:1.5em;">✅ Caixa Fechado!</span>' : '<span style="color:#C23B22;font-size:1.5em;">⚠️ Divergência Detectada</span>';
+        html += '</div></div>';
         
         document.getElementById('resultadoConteudo').innerHTML = html;
+        
+        // Salvar no histórico local
+        var historico = JSON.parse(localStorage.getItem('historicoCaixa') || '[]');
+        historico.unshift({data: new Date().toLocaleDateString('pt-BR'), informado: data.total_informado, registrado: data.total_registrado, diferenca: data.diferenca, status: data.status});
+        if (historico.length > 5) historico.pop();
+        localStorage.setItem('historicoCaixa', JSON.stringify(historico));
+        renderizarHistorico();
+        
     } catch(e) {
         document.getElementById('resultadoConteudo').innerHTML = '<p style="color:#C23B22;">Erro: ' + e + '</p>';
     }
 }
+
+function renderizarHistorico() {
+    var historico = JSON.parse(localStorage.getItem('historicoCaixa') || '[]');
+    var div = document.getElementById('historicoFechamento');
+    if (!historico.length) { div.innerHTML = '<p style="color:#8B6B4A;">Nenhum registro anterior.</p>'; return; }
+    div.innerHTML = historico.map(function(h) {
+        var cor = h.status === 'ok' ? '#4CAF50' : '#C23B22';
+        return '<p style="padding:5px;margin:3px 0;">📅 ' + h.data + ' - <span style="color:' + cor + ';">' + (h.status === 'ok' ? '✅' : '⚠️') + ' R$ ' + h.diferenca.toFixed(2) + '</span></p>';
+    }).join('');
+}
+
+// Carregar histórico
+renderizarHistorico();
 </script>
 {% endblock %}

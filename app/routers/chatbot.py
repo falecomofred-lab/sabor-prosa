@@ -2,18 +2,25 @@
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from ..database import get_db
-from ..services.ai_service import AIService
+from ..services.ai_service import ClaudeteIA
 
 router = APIRouter(prefix="/api/chat", tags=["Chatbot"])
-ai_service = AIService()
+claudete = ClaudeteIA()
 
-class ChatRequest(BaseModel): mensagem: str
-class ChatResponse(BaseModel): resposta: str; usou_tools: bool = False
+class ChatRequest(BaseModel):
+    mensagem: str
+
+class ChatResponse(BaseModel):
+    resposta: str
+    usou_ferramentas: bool = False
 
 @router.post("/", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest, db: Session = Depends(get_db)):
+async def conversar(request: ChatRequest, db: Session = Depends(get_db)):
     try:
-        result = await ai_service.chat_with_tools(request.mensagem, db)
-        return ChatResponse(resposta=result["texto"], usou_tools=result["usou_tools"])
+        resultado = await claudete.conversar(request.mensagem, db)
+        return ChatResponse(
+            resposta=resultado["resposta"],
+            usou_ferramentas=resultado["usou_ferramentas"]
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro: {str(e)}")

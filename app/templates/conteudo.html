@@ -1,12 +1,158 @@
 ﻿{% extends "base.html" %}
 {% block content %}
-<h1>📱 Gerador de Conteúdo</h1>
-<div class="card"><h2>🤖 Agente de Posts</h2>
-<div class="form-row"><div class="form-group"><label>Tipo</label><select id="tipoPost"><option value="produto_dia">✨ Produto do Dia</option><option value="harmonizacao">🍷 Harmonização</option><option value="promocao">⚠️ Promoção</option><option value="dica">💡 Dica</option></select></div>
-<div class="form-group"><label>Produto</label><select id="produtoSelect"><option value="">Selecione...</option>{% for p in produtos %}<option value="{{ p.nome }}|{{ p.descricao_curta }}|{{ p.preco_venda }}">{{ p.nome }}</option>{% endfor %}</select></div></div>
-<button class="btn" onclick="gerar()" style="width:100%;">🎨 Gerar Post</button></div>
-<div class="card" id="resultadoCard" style="display:none;"><h2>📝 Post Gerado</h2><div id="resultadoConteudo" style="white-space:pre-wrap;background:#2A1F14;padding:20px;border-radius:8px;"></div><button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('resultadoConteudo').textContent);alert('Copiado!');" style="margin-top:10px;">📋 Copiar</button></div>
+<h1>📱 Central de Conteúdo</h1>
+
+<!-- Abas -->
+<div style="display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap;">
+    <button class="btn" onclick="mostrarAba('posts')" id="btnPosts" style="background:#A37D5A;">📝 Posts</button>
+    <button class="btn" onclick="mostrarAba('roteiros')" id="btnRoteiros">🎬 Roteiros</button>
+    <button class="btn" onclick="mostrarAba('combos')" id="btnCombos">🎁 Combos</button>
+    <button class="btn" onclick="mostrarAba('promocoes')" id="btnPromocoes">⚠️ Promoções</button>
+</div>
+
+<!-- ABA 1: Posts -->
+<div id="abaPosts">
+    <div class="card">
+        <h2>📝 Gerador de Posts</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tipo de Post</label>
+                <select id="tipoPost">
+                    <option value="produto_dia">✨ Produto do Dia</option>
+                    <option value="harmonizacao">🍷 Harmonização</option>
+                    <option value="promocao">⚠️ Promoção</option>
+                    <option value="dica">💡 Dica do Dia</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Produto (opcional)</label>
+                <select id="produtoPost"><option value="">Selecione...</option></select>
+            </div>
+        </div>
+        <button class="btn" onclick="gerarPost()" style="width:100%;">🎨 Gerar Post</button>
+        <div id="resultadoPost" style="margin-top:15px;"></div>
+    </div>
+</div>
+
+<!-- ABA 2: Roteiros -->
+<div id="abaRoteiros" style="display:none;">
+    <div class="card">
+        <h2>🎬 Roteiro para Vídeo</h2>
+        <div class="form-row">
+            <div class="form-group"><label>Produto</label><select id="produtoRoteiro"><option value="">Selecione...</option></select></div>
+        </div>
+        <button class="btn" onclick="gerarRoteiro()" style="width:100%;">🎬 Gerar Roteiro</button>
+        <div id="resultadoRoteiro" style="margin-top:15px;"></div>
+    </div>
+</div>
+
+<!-- ABA 3: Combos -->
+<div id="abaCombos" style="display:none;">
+    <div class="card">
+        <h2>🎁 Sugestão de Combo</h2>
+        <p style="color:#D4B896;">A IA analisa seu estoque e sugere combos prontos para vender.</p>
+        <button class="btn" onclick="gerarCombo()" style="width:100%;">✨ Sugerir Combo</button>
+        <div id="resultadoCombo" style="margin-top:15px;"></div>
+    </div>
+</div>
+
+<!-- ABA 4: Promoções -->
+<div id="abaPromocoes" style="display:none;">
+    <div class="card">
+        <h2>⚠️ Promoções Inteligentes</h2>
+        <p style="color:#D4B896;">A IA analisa produtos parados no estoque e sugere promoções.</p>
+        <button class="btn" onclick="gerarPromocoes()" style="width:100%;">🔍 Analisar Estoque</button>
+        <div id="resultadoPromocoes" style="margin-top:15px;"></div>
+    </div>
+</div>
+
 <script>
-async function gerar(){const t=document.getElementById('tipoPost').value;const v=document.getElementById('produtoSelect').value;let n='',d='',p=0;if(v){const x=v.split('|');n=x[0];d=x[1]||'';p=parseFloat(x[2])||0;}document.getElementById('resultadoCard').style.display='block';document.getElementById('resultadoConteudo').textContent='Gerando...';const r=await fetch('/api/conteudo/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo:t,produto_nome:n,produto_desc:d,preco:p})});const j=await r.json();document.getElementById('resultadoConteudo').textContent=j.sucesso?j.conteudo:'Erro: '+j.erro;}
+// Navegação por abas
+function mostrarAba(aba) {
+    ['posts','roteiros','combos','promocoes'].forEach(function(a) {
+        document.getElementById('aba' + a.charAt(0).toUpperCase() + a.slice(1)).style.display = (a === aba) ? 'block' : 'none';
+        document.getElementById('btn' + a.charAt(0).toUpperCase() + a.slice(1)).style.background = (a === aba) ? '#A37D5A' : '#8B6B4A';
+    });
+}
+
+// Carregar produtos nos selects
+fetch('/api/produtos/').then(r => r.json()).then(function(produtos) {
+    var ativos = produtos.filter(function(p) { return p.estoque_atual > 0; });
+    ['produtoPost', 'produtoRoteiro'].forEach(function(id) {
+        var sel = document.getElementById(id);
+        ativos.forEach(function(p) {
+            var opt = document.createElement('option');
+            opt.value = p.nome + '|' + (p.descricao_curta || '') + '|' + p.preco_venda;
+            opt.textContent = p.nome + ' (R$ ' + p.preco_venda.toFixed(2) + ')';
+            sel.appendChild(opt);
+        });
+    });
+});
+
+// ========== POSTS ==========
+async function gerarPost() {
+    var tipo = document.getElementById('tipoPost').value;
+    var val = document.getElementById('produtoPost').value;
+    var nome = '', desc = '', preco = 0;
+    if (val) { var p = val.split('|'); nome = p[0]; desc = p[1] || ''; preco = parseFloat(p[2]) || 0; }
+    
+    document.getElementById('resultadoPost').innerHTML = '<p>🤖 Gerando post...</p>';
+    var resp = await fetch('/api/conteudo/gerar-post', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({tipo:tipo, produto_nome:nome, produto_desc:desc, preco:preco})
+    });
+    var data = await resp.json();
+    document.getElementById('resultadoPost').innerHTML = 
+        '<div style="background:#2A1F14;padding:15px;border-radius:12px;">' +
+        '<pre style="white-space:pre-wrap;font-size:0.9em;">' + (data.conteudo || 'Erro ao gerar') + '</pre>' +
+        '<button class="btn" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent);alert(\'Copiado!\')" style="margin-top:10px;">📋 Copiar</button>' +
+        '</div>';
+}
+
+// ========== ROTEIROS ==========
+async function gerarRoteiro() {
+    var val = document.getElementById('produtoRoteiro').value;
+    if (!val) return alert('Selecione um produto!');
+    var p = val.split('|');
+    
+    document.getElementById('resultadoRoteiro').innerHTML = '<p>🤖 Criando roteiro...</p>';
+    var resp = await fetch('/api/roteiros/video', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({produto_nome:p[0], produto_desc:p[1]||'', preco:parseFloat(p[2])||0})
+    });
+    var data = await resp.json();
+    document.getElementById('resultadoRoteiro').innerHTML = 
+        '<div style="background:#2A1F14;padding:15px;border-radius:12px;">' +
+        '<h3>🎬 ' + data.produto + '</h3>' +
+        '<pre style="white-space:pre-wrap;font-size:0.9em;">' + data.roteiro + '</pre></div>';
+}
+
+// ========== COMBOS ==========
+async function gerarCombo() {
+    document.getElementById('resultadoCombo').innerHTML = '<p>🤖 IA analisando estoque...</p>';
+    var resp = await fetch('/api/roteiros/combo');
+    var data = await resp.json();
+    document.getElementById('resultadoCombo').innerHTML = 
+        '<div style="background:#2A1F14;padding:15px;border-radius:12px;">' +
+        '<pre style="white-space:pre-wrap;font-size:0.9em;">' + data.combo_sugerido + '</pre></div>';
+}
+
+// ========== PROMOÇÕES ==========
+async function gerarPromocoes() {
+    document.getElementById('resultadoPromocoes').innerHTML = '<p>🤖 IA analisando estoque...</p>';
+    var resp = await fetch('/api/roteiros/estoque-parado');
+    var data = await resp.json();
+    var html = '<div style="background:#2A1F14;padding:15px;border-radius:12px;">';
+    if (data.sugestoes && data.sugestoes.length > 0) {
+        html += '<h3 style="color:#D4B896;">📦 Produtos com Estoque Alto</h3>';
+        data.sugestoes.forEach(function(p) {
+            html += '<p style="padding:5px;margin:3px 0;">• <strong>' + p.produto + '</strong>: ' + p.estoque + ' unid - R$ ' + p.preco.toFixed(2) + '</p>';
+        });
+    }
+    html += '<h3 style="color:#D4B896;margin-top:10px;">🤖 Sugestão da IA</h3>';
+    html += '<pre style="white-space:pre-wrap;font-size:0.9em;">' + (data.analise_ia || data.mensagem || 'Nenhuma sugestão') + '</pre>';
+    html += '</div>';
+    document.getElementById('resultadoPromocoes').innerHTML = html;
+}
 </script>
 {% endblock %}

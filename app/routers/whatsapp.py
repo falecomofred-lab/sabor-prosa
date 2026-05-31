@@ -1,6 +1,6 @@
 ﻿from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from ..services.ai_service import AIService
+from ..services.ai_service import ClaudeteIA
 from ..database import SessionLocal
 import httpx
 

@@ -2,6 +2,7 @@
 *.pyc
 .env
 sabor_prosa.db
-static/fotos/
-static/videos/
+static/fotos/*
+static/videos/*
+static/qrcodes/*
 qrcode_acesso.png
