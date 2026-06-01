@@ -6,80 +6,129 @@
     <title>Sabor e Prosa - Cadastro</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #1A120B; color: #F5E6D3; padding: 20px; }
-        .card { background: #3E3526; border-radius: 16px; padding: 30px; max-width: 400px; margin: 0 auto; }
-        .card h1 { color: #D4B896; text-align: center; font-size: 1.3em; margin-bottom: 5px; }
-        .card p { text-align: center; color: #8B6B4A; margin-bottom: 20px; font-size: 0.9em; }
-        .form-group { margin-bottom: 15px; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1A120B;
+            color: #F5E6D3;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: #3E3526;
+            border-radius: 20px;
+            padding: 35px 25px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+        .logo { font-size: 4em; margin-bottom: 10px; }
+        .card h1 { color: #D4B896; font-size: 1.4em; margin-bottom: 5px; }
+        .card .subtitulo { color: #8B6B4A; font-size: 0.9em; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; margin-bottom: 5px; color: #D4B896; font-size: 0.9em; }
-        .form-group input, .form-group select { background: #2A1F14; border: 1px solid #5C4A37; color: #F5E6D3; padding: 12px; border-radius: 8px; width: 100%; font-size: 1em; }
-        .btn { background: #8B6B4A; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-size: 1.1em; width: 100%; font-weight: bold; margin-top: 10px; }
-        .google-btn { background: #4285F4; }
-        .apple-btn { background: #000; }
-        .divider { text-align: center; margin: 15px 0; color: #8B6B4A; }
-        .sucesso { color: #4CAF50; text-align: center; display: none; }
-        .footer { text-align: center; margin-top: 20px; font-size: 0.8em; color: #8B6B4A; }
+        .form-group input, .form-group select {
+            background: #2A1F14; border: 1px solid #5C4A37; color: #F5E6D3;
+            padding: 14px 12px; border-radius: 10px; width: 100%; font-size: 1em;
+        }
+        .form-group input::placeholder { color: #5C4A37; }
+        .btn {
+            background: #8B6B4A; color: white; border: none;
+            padding: 14px; border-radius: 10px; cursor: pointer;
+            font-size: 1.1em; width: 100%; font-weight: bold; margin-top: 5px;
+        }
+        .btn:hover { background: #A37D5A; }
+        
+        .sucesso {
+            display: none;
+            color: #4CAF50; padding: 20px; text-align: center;
+        }
+        .sucesso .check { font-size: 4em; }
+        .sucesso h2 { margin: 10px 0; }
+        
+        .erro { color: #C23B22; font-size: 0.85em; margin-top: 5px; display: none; }
+        .footer { margin-top: 20px; font-size: 0.8em; color: #8B6B4A; }
         .footer a { color: #D4B896; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🍽️ Sabor e Prosa</h1>
-        <p>Cadastro rápido para receber novidades</p>
-        
-        <button class="btn google-btn" onclick="alert('Login com Google em breve!')">📧 Continuar com Google</button>
-        <button class="btn apple-btn" onclick="alert('Login com Apple em breve!')" style="margin-top:8px;">🍎 Continuar com Apple</button>
-        
-        <div class="divider">— ou —</div>
+    <div class="card" id="formCard">
+        <div class="logo">🧀</div>
+        <h1>Sabor e Prosa</h1>
+        <p class="subtitulo">Cadastre-se para receber novidades, promoções e saber onde estaremos!</p>
         
         <form onsubmit="return cadastrar(event)">
             <div class="form-group">
-                <label>Nome</label>
+                <label>Nome completo *</label>
                 <input type="text" id="nome" placeholder="Seu nome" required>
             </div>
             <div class="form-group">
-                <label>Telefone</label>
-                <input type="tel" id="telefone" placeholder="(11) 99999-9999" required>
+                <label>Telefone (WhatsApp) *</label>
+                <input type="tel" id="telefone" placeholder="(21) 99999-9999" required>
             </div>
             <div class="form-group">
                 <label>Como nos conheceu?</label>
                 <select id="origem" required>
                     <option value="">Selecione...</option>
-                    <option value="feira">🏪 Feira/Evento</option>
+                    <option value="feira">🏪 Feira / Evento</option>
                     <option value="instagram">📱 Instagram</option>
                     <option value="whatsapp">💬 WhatsApp</option>
-                    <option value="indicacao">👥 Indicação</option>
-                    <option value="outro">🔍 Outro</option>
+                    <option value="indicacao">👥 Indicação de amigo</option>
+                    <option value="google">🔍 Google</option>
+                    <option value="outro">🔎 Outro</option>
                 </select>
             </div>
-            <button type="submit" class="btn">📱 Receber código via WhatsApp</button>
+            <button type="submit" class="btn">📝 Cadastrar</button>
+            <p class="erro" id="erro">Erro ao cadastrar. Tente novamente.</p>
         </form>
-        
-        <div class="sucesso" id="sucesso">
-            <h3>✅ Cadastro enviado!</h3>
-            <p>Você receberá um código de confirmação via WhatsApp.</p>
-        </div>
+    </div>
+    
+    <div class="sucesso" id="sucessoCard">
+        <div class="check">✅</div>
+        <h2>Cadastro realizado!</h2>
+        <p>Bem-vindo(a) à família Sabor e Prosa! 🧀🍷</p>
+        <p style="margin-top:10px;">Em breve você receberá novidades, promoções e convites para nossas feiras e eventos.</p>
+        <p style="margin-top:15px;color:#8B6B4A;">📱 Fique de olho no WhatsApp!</p>
     </div>
     
     <div class="footer">Desenvolvido por <a href="https://venure.com.br" target="_blank">venure.com.br</a></div>
-    
+
     <script>
         async function cadastrar(e) {
             e.preventDefault();
-            const nome = document.getElementById('nome').value;
-            const telefone = document.getElementById('telefone').value;
+            
+            const nome = document.getElementById('nome').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
             const origem = document.getElementById('origem').value;
             
+            if (!nome || !telefone || !origem) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+            
             try {
-                await fetch('/api/clientes/cadastro-evento', {
+                const resp = await fetch('/api/clientes/cadastro-evento', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({nome, telefone, origem, evento: 'QR Code Feira'})
+                    body: JSON.stringify({
+                        nome: nome,
+                        telefone: telefone,
+                        origem: origem,
+                        evento: 'Cadastro via QR Code'
+                    })
                 });
-                document.querySelector('form').style.display = 'none';
-                document.getElementById('sucesso').style.display = 'block';
-            } catch(e) {
-                alert('Erro ao cadastrar. Tente novamente.');
+                
+                if (resp.ok) {
+                    document.getElementById('formCard').style.display = 'none';
+                    document.getElementById('sucessoCard').style.display = 'block';
+                } else {
+                    document.getElementById('erro').style.display = 'block';
+                }
+            } catch(err) {
+                document.getElementById('erro').style.display = 'block';
             }
         }
     </script>
