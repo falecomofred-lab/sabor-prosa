@@ -1,124 +1,241 @@
 ﻿{% extends "base.html" %}
 {% block content %}
-<h1>📚 Tutorial - Como Usar o Sistema</h1>
+<h1>📚 Tutorial - Sabor e Prosa Empório</h1>
 
 <div style="background:#2A1F14;padding:15px;border-radius:12px;margin-bottom:20px;text-align:center;">
-    <h2 style="color:#D4B896;">🍽️ Sabor e Prosa Empório</h2>
-    <p style="color:#8B6B4A;">Sistema de Gestão Inteligente</p>
+    <h2 style="color:#D4B896;">🍽️ Bem-vindo ao Sistema de Gestão</h2>
+    <p style="color:#8B6B4A;">Um guia completo para Thiago e Simone operarem o sistema no dia a dia</p>
     <p style="font-size:0.8em;">Desenvolvido por <a href="https://venure.com.br" target="_blank" style="color:#D4B896;">venure.com.br</a></p>
 </div>
 
+<!-- ÍNDICE -->
 <div class="card">
     <h2>📑 Índice Rápido</h2>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <a href="#inicio" style="color:#D4B896;">🚀 Primeiro Acesso</a>
-        <a href="#pdv" style="color:#D4B896;">🛒 Usar o PDV</a>
-        <a href="#produtos" style="color:#D4B896;">📦 Cadastrar Produto</a>
-        <a href="#vitrine" style="color:#D4B896;">🛍️ Vitrine do Cliente</a>
+        <a href="#acesso" style="color:#D4B896;">🔐 Acesso e Login</a>
+        <a href="#dashboard" style="color:#D4B896;">📊 Dashboard</a>
+        <a href="#pdv" style="color:#D4B896;">🛒 PDV (Vendas)</a>
+        <a href="#produtos" style="color:#D4B896;">📦 Produtos</a>
         <a href="#fornecedores" style="color:#D4B896;">🚚 Fornecedores</a>
-        <a href="#conteudo" style="color:#D4B896;">📱 Criar Conteúdo</a>
+        <a href="#clientes" style="color:#D4B896;">👥 Clientes (CRM)</a>
+        <a href="#eventos" style="color:#D4B896;">🎉 Eventos e Feiras</a>
+        <a href="#kits" style="color:#D4B896;">🎁 Kits & Cestas</a>
+        <a href="#marketing" style="color:#D4B896;">📱 Marketing e IA</a>
         <a href="#rotas" style="color:#D4B896;">🗺️ Rotas de Entrega</a>
+        <a href="#financeiro" style="color:#D4B896;">💰 Fechamento de Caixa</a>
+        <a href="#vitrine" style="color:#D4B896;">🛍️ Vitrine do Cliente</a>
         <a href="#dicas" style="color:#D4B896;">💡 Dicas Finais</a>
     </div>
 </div>
 
-<div class="card" id="inicio">
-    <h2>🚀 Primeiro Acesso</h2>
+<!-- ACESSO -->
+<div class="card" id="acesso">
+    <h2>🔐 1. Primeiro Acesso e Login</h2>
     <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p><strong>1.</strong> Abra o PowerShell e digite:</p>
+        <p><strong>📱 Como acessar:</strong></p>
+        <p>Abra o navegador (Chrome, Safari) e digite:</p>
         <div style="background:#1A120B;padding:10px;border-radius:8px;margin:10px 0;font-family:monospace;color:#D4B896;">
-            cd C:\Users\Frederico\projetos\sabor_prosa_emporio_v2\backend<br>
-            python -m uvicorn app.main:app --reload
+            https://sabor-prosa.onrender.com
         </div>
-        <p><strong>2.</strong> Acesse no navegador:</p>
-        <div style="background:#1A120B;padding:10px;border-radius:8px;margin:10px 0;font-family:monospace;color:#D4B896;">
-            http://localhost:8000/dashboard
-        </div>
-        <p><strong>3.</strong> No celular (mesma rede WiFi):</p>
-        <div style="background:#1A120B;padding:10px;border-radius:8px;margin:10px 0;font-family:monospace;color:#D4B896;">
-            http://192.168.15.8:8000/dashboard
-        </div>
+        <p><strong>🔑 Credenciais:</strong></p>
+        <table>
+            <tr><td>👤 Thiago</td><td><code>thiago</code></td><td><code>sabor2026</code></td></tr>
+            <tr><td>👤 Simone</td><td><code>simone</code></td><td><code>prosa2026</code></td></tr>
+        </table>
+        <p style="margin-top:10px;">💡 <strong>Dica:</strong> No celular, toque nos 3 pontinhos do navegador e escolha <em>"Adicionar à tela inicial"</em> para virar um app!</p>
     </div>
 </div>
 
+<!-- DASHBOARD -->
+<div class="card" id="dashboard">
+    <h2>📊 2. Dashboard - Seu Painel de Controle</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
+        <p>É a <strong>primeira tela</strong> após o login. Aqui você vê:</p>
+        <ul style="padding-left:20px;">
+            <li>📦 <strong>4 Cards:</strong> Estoque Total, Produtos, Margem Média, Alertas</li>
+            <li>🌤️ <strong>Clima do dia:</strong> Para planejar feiras ao ar livre</li>
+            <li>💵 <strong>Cotação Dólar/Euro:</strong> Para precificar importados</li>
+            <li>🎉 <strong>Feriados próximos:</strong> Para criar promoções</li>
+            <li>⛽ <strong>Preço da gasolina:</strong> Para calcular entregas</li>
+            <li>⚡ <strong>8 Ações Rápidas:</strong> Botões para tarefas frequentes</li>
+            <li>🔴🟡🟢 <strong>Prioridades:</strong> Tarefas por urgência</li>
+        </ul>
+    </div>
+</div>
+
+<!-- PDV -->
 <div class="card" id="pdv">
-    <h2>🛒 Como Usar o PDV</h2>
+    <h2>🛒 3. PDV - Ponto de Venda</h2>
     <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p><strong>1.</strong> Clique em <strong>"🛒 PDV"</strong> no menu</p>
-        <p><strong>2.</strong> Toque nos <strong>produtos mais vendidos</strong> (topo da tela)</p>
-        <p><strong>3.</strong> Ou use o <strong>📷 scanner</strong> para ler código de barras</p>
-        <p><strong>4.</strong> Ou <strong>digite o nome</strong> do produto na busca</p>
-        <p><strong>5.</strong> Clique em <strong>"💰 Finalizar"</strong></p>
-        <p><strong>6.</strong> Digite o valor recebido → <strong>TROCO GIGANTE</strong> na tela!</p>
-        <p style="color:#D4B896;">💡 Use "⏸️ Pausar Venda" para atender outro cliente.</p>
+        <p>Use no <strong>balcão da feira ou loja</strong> para registrar vendas rápidas:</p>
+        <ol style="padding-left:20px;">
+            <li>Clique em <strong>"🛒 PDV"</strong> no menu</li>
+            <li>Toque nos <strong>produtos mais vendidos</strong> (botões no topo)</li>
+            <li>Ou <strong>digite o nome</strong> do produto na busca (aparece lista de sugestões!)</li>
+            <li>Ou use o <strong>📷 scanner de código de barras</strong> (câmera do celular)</li>
+            <li>O carrinho mostra todos os itens e o <strong>total</strong></li>
+            <li>Clique em <strong>"💰 Finalizar"</strong></li>
+            <li>Digite o valor recebido → <strong>TROCO GIGANTE</strong> na tela!</li>
+        </ol>
+        <p style="color:#D4B896;">💡 <strong>Dica:</strong> Use "⏸️ Pausar Venda" para atender outro cliente e retomar depois.</p>
+        <p style="color:#D4B896;">💡 O PDV funciona <strong>OFFLINE</strong> (sem internet)!</p>
     </div>
 </div>
 
+<!-- PRODUTOS -->
 <div class="card" id="produtos">
-    <h2>📦 Como Cadastrar um Produto</h2>
+    <h2>📦 4. Cadastrar e Gerenciar Produtos</h2>
     <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p><strong>1.</strong> Clique em <strong>"📦 Produtos"</strong></p>
-        <p><strong>2.</strong> Preencha: Nome, Categoria, Código de Barras</p>
-        <p><strong>3.</strong> Preço de Custo e Venda → <strong>Margem calcula sozinha!</strong></p>
-        <p><strong>4.</strong> Tire uma <strong>foto com o celular</strong> 📸</p>
-        <p><strong>5.</strong> Clique em <strong>"💾 Salvar"</strong></p>
+        <ol style="padding-left:20px;">
+            <li>Clique em <strong>"📦 Produtos"</strong></li>
+            <li>Preencha: Nome, Categoria, Código de Barras</li>
+            <li><strong>Preço de Custo e Venda:</strong> A margem calcula sozinha!</li>
+            <li>Tire uma <strong>foto com o celular</strong> 📸</li>
+            <li>Clique em <strong>"💾 Salvar"</strong></li>
+        </ol>
+        <p style="color:#D4B896;">💡 Use o botão "📋 Duplicar" para criar produtos parecidos rapidamente.</p>
+        <p style="color:#D4B896;">💡 Use a <strong>busca por nome ou código</strong> para encontrar produtos rápido.</p>
     </div>
 </div>
 
-<div class="card" id="vitrine">
-    <h2>🛍️ Vitrine do Cliente</h2>
-    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p><strong>1.</strong> Acesse: <span style="color:#D4B896;">/vitrine</span></p>
-        <p><strong>2.</strong> Envie o link para clientes via <strong>WhatsApp</strong></p>
-        <p><strong>3.</strong> Cliente vê produtos com fotos e preços</p>
-        <p><strong>4.</strong> Monta carrinho e finaliza → <strong>Pedido cai no seu WhatsApp!</strong></p>
-    </div>
-</div>
-
+<!-- FORNECEDORES -->
 <div class="card" id="fornecedores">
-    <h2>🚚 Fornecedores (30 segundos!)</h2>
+    <h2>🚚 5. Fornecedores (CNPJ e CEP automáticos)</h2>
     <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p><strong>1.</strong> Digite o <strong>CNPJ</strong> e clique em 🔍</p>
-        <p><strong>2.</strong> Sistema preenche: nome, telefone, email, endereço!</p>
-        <p><strong>3.</strong> Digite o <strong>CEP</strong> e clique em 📍</p>
-        <p><strong>4.</strong> Endereço completo preenchido automaticamente!</p>
+        <ol style="padding-left:20px;">
+            <li>Digite o <strong>CNPJ</strong> e clique em 🔍 → preenche tudo automaticamente!</li>
+            <li>Digite o <strong>CEP</strong> e clique em 📍 → endereço completo!</li>
+            <li>Complete os campos que faltarem</li>
+            <li>Clique em <strong>"💾 Salvar"</strong></li>
+        </ol>
+        <p style="color:#D4B896;">⏱️ Tempo estimado: <strong>30 segundos</strong> por fornecedor!</p>
     </div>
 </div>
 
-<div class="card" id="conteudo">
-    <h2>📱 Criar Posts com IA</h2>
+<!-- CLIENTES -->
+<div class="card" id="clientes">
+    <h2>👥 6. Clientes (CRM e Fidelidade)</h2>
     <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p><strong>1.</strong> Clique em <strong>"📱 Conteúdo"</strong></p>
-        <p><strong>2.</strong> Escolha o tipo: Produto do Dia, Harmonização, Promoção</p>
-        <p><strong>3.</strong> Selecione o produto</p>
-        <p><strong>4.</strong> Clique em <strong>"🎨 Gerar Post"</strong></p>
-        <p><strong>5.</strong> IA cria texto com <strong>hashtags e emojis</strong>!</p>
-        <p><strong>6.</strong> Clique em <strong>"📋 Copiar"</strong> e cole no Instagram</p>
+        <p><strong>Funcionalidades:</strong></p>
+        <ul style="padding-left:20px;">
+            <li>Cadastro completo (nome, telefone, CPF, endereço)</li>
+            <li>Histórico de compras automático</li>
+            <li>Tags: ⭐ VIP, 💤 Inativo, 🏪 Feira</li>
+            <li>Botão 📱 WhatsApp direto em cada cliente</li>
+            <li>Filtro por tags e busca por nome/telefone</li>
+        </ul>
+        <p style="color:#D4B896;">💡 Clientes que chegam via QR Code em feiras ficam marcados como "🏪 Feira"!</p>
     </div>
 </div>
 
+<!-- EVENTOS -->
+<div class="card" id="eventos">
+    <h2>🎉 7. Central de Eventos e Feiras</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
+        <p><strong>4 abas em 1 tela:</strong></p>
+        <ul style="padding-left:20px;">
+            <li>📅 <strong>Agenda:</strong> Cadastre feiras e eventos</li>
+            <li>📡 <strong>Radar:</strong> Busca automática de eventos na região</li>
+            <li>🔔 <strong>Alertas:</strong> Notificações: "HOJE", "AMANHÃ", "7 dias"</li>
+            <li>💰 <strong>ROI:</strong> Lucro vs custo de cada evento</li>
+        </ul>
+    </div>
+</div>
+
+<!-- KITS -->
+<div class="card" id="kits">
+    <h2>🎁 8. Kits e Cestas</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
+        <p><strong>Monte combos para datas especiais:</strong></p>
+        <ol style="padding-left:20px;">
+            <li>Dê um nome (ex: "Cesta Mineira Premium")</li>
+            <li>Defina o preço de venda</li>
+            <li>Selecione os produtos e quantidades</li>
+            <li>O sistema calcula <strong>custo total, margem e lucro</strong> automaticamente!</li>
+        </ol>
+        <p style="color:#D4B896;">🤖 Use "Sugerir Kit" para a IA criar combos baseados no seu estoque!</p>
+    </div>
+</div>
+
+<!-- MARKETING -->
+<div class="card" id="marketing">
+    <h2>📱 9. Marketing e IA (Estúdio de Conteúdo)</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
+        <p><strong>Ferramentas de marketing:</strong></p>
+        <ul style="padding-left:20px;">
+            <li>📝 <strong>Gerador de Posts:</strong> IA cria posts para Instagram com hashtags</li>
+            <li>🎬 <strong>Roteiro para Vídeo:</strong> IA cria roteiro de 30s para Reels/TikTok</li>
+            <li>🎁 <strong>Sugestão de Combo:</strong> IA analisa estoque e sugere kits</li>
+            <li>⚠️ <strong>Promoções:</strong> IA identifica produtos parados e sugere ações</li>
+            <li>🎯 <strong>Gatilhos:</strong> Clientes para reengajar (reposição, inativos, aniversário)</li>
+            <li>📱 <strong>QR Code:</strong> Gere QR Codes com a logo para feiras</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ROTAS -->
 <div class="card" id="rotas">
-    <h2>🗺️ Rotas de Entrega</h2>
+    <h2>🗺️ 10. Roteirizador de Entregas</h2>
     <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p><strong>1.</strong> Clique em <strong>"🗺️ Rotas"</strong></p>
-        <p><strong>2.</strong> Clique em <strong>"📋 Listar Entregas"</strong></p>
-        <p><strong>3.</strong> Veja os pontos no <strong>mapa</strong></p>
-        <p><strong>4.</strong> Clique em <strong>"🗺️ Otimizar Rota"</strong></p>
-        <p><strong>5.</strong> Google calcula <strong>melhor caminho, distância e tempo</strong></p>
+        <p><strong>Otimize suas entregas:</strong></p>
+        <ul style="padding-left:20px;">
+            <li>📊 <strong>Resumo do dia:</strong> Total de entregas, pendentes, faturamento</li>
+            <li>📋 <strong>Lista de entregas:</strong> Com botão WhatsApp e Google Maps</li>
+            <li>🗺️ <strong>Mapa visual:</strong> Veja todos os pontos no mapa</li>
+            <li>🚀 <strong>Otimizar Rota:</strong> Calcula a melhor ordem (distância real)</li>
+            <li>🛵 <strong>Solicitar Motoboy:</strong> Cotação com 99Entregas, Loggi, MotoLink</li>
+        </ul>
     </div>
 </div>
 
-<div class="card" id="dicas">
-    <h2>💡 Dicas Para o Dia a Dia</h2>
+<!-- FINANCEIRO -->
+<div class="card" id="financeiro">
+    <h2>💰 11. Fechamento de Caixa</h2>
     <div style="background:#2A1F14;padding:15px;border-radius:8px;">
-        <p>✅ Cadastre fotos dos produtos (câmera do celular)</p>
-        <p>✅ Use o código de barras para agilizar o PDV</p>
-        <p>✅ Verifique os alertas de estoque baixo no Dashboard</p>
-        <p>✅ Use os Gatilhos para reengajar clientes</p>
-        <p>✅ Gere posts toda semana com a IA</p>
-        <p>✅ Monte kits para datas especiais</p>
-        <p>✅ Use o Checklist antes de cada feira</p>
-        <p>✅ O PDV funciona OFFLINE (sem internet)</p>
+        <p><strong>Modo Cego:</strong> O sistema esconde o valor registrado.</p>
+        <ol style="padding-left:20px;">
+            <li>Digite o <strong>dinheiro físico</strong> contado</li>
+            <li>Digite o valor em <strong>cartão</strong></li>
+            <li>Digite o valor em <strong>Pix</strong></li>
+            <li>O sistema compara com o PDV</li>
+            <li>Se houver diferença, a <strong>IA analisa</strong> e sugere onde pode estar o erro!</li>
+        </ol>
+    </div>
+</div>
+
+<!-- VITRINE -->
+<div class="card" id="vitrine">
+    <h2>🛍️ 12. Vitrine do Cliente (PWA)</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
+        <p><strong>Envie o link para seus clientes:</strong></p>
+        <div style="background:#1A120B;padding:10px;border-radius:8px;margin:10px 0;font-family:monospace;color:#D4B896;">
+            https://sabor-prosa.onrender.com/vitrine
+        </div>
+        <p>O cliente:</p>
+        <ul style="padding-left:20px;">
+            <li>Vê os produtos com <strong>fotos e preços</strong></li>
+            <li>Filtra por <strong>categoria</strong></li>
+            <li>Monta o <strong>carrinho</strong></li>
+            <li>Finaliza o pedido → cai no seu <strong>WhatsApp</strong>!</li>
+        </ul>
+        <p style="color:#D4B896;">💡 Não precisa baixar nada! Funciona direto no navegador do celular.</p>
+    </div>
+</div>
+
+<!-- DICAS -->
+<div class="card" id="dicas">
+    <h2>💡 13. Dicas Para o Dia a Dia</h2>
+    <div style="background:#2A1F14;padding:15px;border-radius:8px;">
+        <p>✅ Cadastre <strong>fotos dos produtos</strong> (use a câmera do celular!)</p>
+        <p>✅ Use o <strong>código de barras</strong> para agilizar o PDV</p>
+        <p>✅ Verifique os <strong>alertas de estoque baixo</strong> no Dashboard</p>
+        <p>✅ Use os <strong>Gatilhos</strong> para reengajar clientes (1 clique!)</p>
+        <p>✅ Gere <strong>posts toda semana</strong> com a IA (Estúdio de Conteúdo)</p>
+        <p>✅ Monte <strong>kits para datas especiais</strong> (Dia dos Namorados, Natal)</p>
+        <p>✅ Use o <strong>Checklist</strong> antes de cada feira/evento</p>
+        <p>✅ O <strong>PDV funciona OFFLINE</strong> (sem internet!)</p>
+        <p>✅ No celular, <strong>adicione à tela inicial</strong> para virar um app</p>
+        <p>✅ Consulte a <strong>Claudete</strong> (botão 💬) para tirar dúvidas!</p>
     </div>
 </div>
 
@@ -126,7 +243,7 @@
     <p style="font-size:1.2em;color:#D4B896;">Desenvolvido por</p>
     <h2><a href="https://venure.com.br" target="_blank" style="color:#D4B896;text-decoration:none;">venure.com.br</a></h2>
     <p style="margin-top:10px;">📧 contato@venure.com.br</p>
-    <p style="font-size:0.85em;color:#8B6B4A;">Sabor e Prosa Empório © 2026</p>
+    <p style="font-size:0.85em;color:#8B6B4A;">Sabor e Prosa Empório © 2026 - Todos os direitos reservados</p>
 </div>
 
 <style>html{scroll-behavior:smooth;}.card h2{border-bottom:2px solid #8B6B4A;padding-bottom:10px;margin-bottom:15px;}</style>
