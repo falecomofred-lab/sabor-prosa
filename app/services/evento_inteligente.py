@@ -5,79 +5,78 @@ from typing import List, Dict
 
 class EventoInteligente:
     
-   @staticmethod
-async def buscar_eventos_regiao(regiao: str = "Niterói") -> List[Dict]:
-    """Retorna links e dicas reais para buscar eventos na região."""
-    hoje = datetime.utcnow().date()
-    
-    return [
-        {
-            "nome": "🔗 Sympla - Buscar eventos em " + regiao,
-            "data": "",
-            "local": "Online",
-            "tipo": "link",
-            "fonte": "Sympla",
-            "inscricao": f"https://www.sympla.com.br/eventos?q={regiao}&tipo=feira+gastronomica",
-            "prazo_inscricao": "Buscar agora",
-            "custo_estimado": 0,
-            "publico_estimado": 0,
-            "match": "alta",
-            "acao": "Buscar no Sympla"
-        },
-        {
-            "nome": "🔗 Eventbrite - Eventos em " + regiao,
-            "data": "",
-            "local": "Online",
-            "tipo": "link",
-            "fonte": "Eventbrite",
-            "inscricao": f"https://www.eventbrite.com.br/d/brazil--{regiao}/food-and-drink/",
-            "prazo_inscricao": "Buscar agora",
-            "custo_estimado": 0,
-            "publico_estimado": 0,
-            "match": "alta",
-            "acao": "Buscar no Eventbrite"
-        },
-        {
-            "nome": "🔗 Prefeitura de " + regiao + " - Editais e Feiras",
-            "data": "",
-            "local": regiao,
-            "tipo": "link",
-            "fonte": "Prefeitura Municipal",
-            "inscricao": f"https://www.google.com/search?q=prefeitura+{regiao}+editais+feiras+gastronomicas",
-            "prazo_inscricao": "Buscar agora",
-            "custo_estimado": 0,
-            "publico_estimado": 0,
-            "match": "alta",
-            "acao": "Buscar Editais"
-        },
-        {
-            "nome": "🔗 SEBRAE - Capacitação e Feiras",
-            "data": "",
-            "local": "Regional",
-            "tipo": "link",
-            "fonte": "SEBRAE",
-            "inscricao": "https://www.sebrae.com.br/sites/PortalSebrae/ufs/rj",
-            "prazo_inscricao": "Buscar agora",
-            "custo_estimado": 0,
-            "publico_estimado": 0,
-            "match": "media",
-            "acao": "Acessar SEBRAE RJ"
-        },
-        {
-            "nome": "🔗 Google Alertas - Monitorar oportunidades",
-            "data": "",
-            "local": "Online",
-            "tipo": "link",
-            "fonte": "Google Alertas",
-            "inscricao": f"https://www.google.com/alerts?q=feira+gastronomica+{regiao}",
-            "prazo_inscricao": "Configurar agora",
-            "custo_estimado": 0,
-            "publico_estimado": 0,
-            "match": "media",
-            "acao": "Criar Alerta"
-        }
-    ]
-        return sorted(eventos_sugeridos, key=lambda e: e["data"])
+    @staticmethod
+    async def buscar_eventos_regiao(regiao: str = "Niterói") -> List[Dict]:
+        """Retorna links e dicas reais para buscar eventos na região."""
+        hoje = datetime.utcnow().date()
+        
+        return [
+            {
+                "nome": "🔗 Sympla - Buscar eventos em " + regiao,
+                "data": "",
+                "local": "Online",
+                "tipo": "link",
+                "fonte": "Sympla",
+                "inscricao": f"https://www.sympla.com.br/eventos?q={regiao}&tipo=feira+gastronomica",
+                "prazo_inscricao": "Buscar agora",
+                "custo_estimado": 0,
+                "publico_estimado": 0,
+                "match": "alta",
+                "acao": "Buscar no Sympla"
+            },
+            {
+                "nome": "🔗 Eventbrite - Eventos em " + regiao,
+                "data": "",
+                "local": "Online",
+                "tipo": "link",
+                "fonte": "Eventbrite",
+                "inscricao": f"https://www.eventbrite.com.br/d/brazil--{regiao}/food-and-drink/",
+                "prazo_inscricao": "Buscar agora",
+                "custo_estimado": 0,
+                "publico_estimado": 0,
+                "match": "alta",
+                "acao": "Buscar no Eventbrite"
+            },
+            {
+                "nome": "🔗 Prefeitura de " + regiao + " - Editais e Feiras",
+                "data": "",
+                "local": regiao,
+                "tipo": "link",
+                "fonte": "Prefeitura Municipal",
+                "inscricao": f"https://www.google.com/search?q=prefeitura+{regiao}+editais+feiras+gastronomicas",
+                "prazo_inscricao": "Buscar agora",
+                "custo_estimado": 0,
+                "publico_estimado": 0,
+                "match": "alta",
+                "acao": "Buscar Editais"
+            },
+            {
+                "nome": "🔗 SEBRAE - Capacitação e Feiras",
+                "data": "",
+                "local": "Regional",
+                "tipo": "link",
+                "fonte": "SEBRAE",
+                "inscricao": "https://www.sebrae.com.br/sites/PortalSebrae/ufs/rj",
+                "prazo_inscricao": "Buscar agora",
+                "custo_estimado": 0,
+                "publico_estimado": 0,
+                "match": "media",
+                "acao": "Acessar SEBRAE RJ"
+            },
+            {
+                "nome": "🔗 Google Alertas - Monitorar oportunidades",
+                "data": "",
+                "local": "Online",
+                "tipo": "link",
+                "fonte": "Google Alertas",
+                "inscricao": f"https://www.google.com/alerts?q=feira+gastronomica+{regiao}",
+                "prazo_inscricao": "Configurar agora",
+                "custo_estimado": 0,
+                "publico_estimado": 0,
+                "match": "media",
+                "acao": "Criar Alerta"
+            }
+        ]
     
     @staticmethod
     async def gerar_notificacoes() -> Dict:
