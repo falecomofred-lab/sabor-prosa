@@ -8,6 +8,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#1A120B">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sabor e Prosa">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
@@ -15,7 +16,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #1A120B; color: #F5E6D3; min-height: 100vh; }
         
-        /* Sidebar */
+        /* Sidebar Desktop */
         .sidebar {
             background: #0F0A06;
             width: 220px;
@@ -25,54 +26,31 @@
             z-index: 100;
             overflow-y: auto;
             border-right: 1px solid #2A1F14;
+            transition: transform 0.3s ease;
         }
         .sidebar h2 { color: #D4B896; font-size: 1em; margin-bottom: 20px; text-align: center; }
-        
         .menu-category {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #D4B896;
-            padding: 10px 8px;
-            cursor: pointer;
-            border-radius: 8px;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: background 0.2s;
-            user-select: none;
+            display: flex; align-items: center; gap: 8px;
+            color: #D4B896; padding: 10px 8px; cursor: pointer;
+            border-radius: 8px; font-size: 0.9em; font-weight: 600;
+            transition: background 0.2s; user-select: none;
         }
         .menu-category:hover { background: #2A1F14; }
-        .menu-category .arrow {
-            margin-left: auto;
-            transition: transform 0.3s;
-            font-size: 0.7em;
-            color: #8B6B4A;
-        }
+        .menu-category .arrow { margin-left: auto; transition: transform 0.3s; font-size: 0.7em; color: #8B6B4A; }
         .menu-category.open .arrow { transform: rotate(90deg); }
-        
-        .submenu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
+        .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
         .submenu.show { max-height: 500px; }
-        
         .submenu a {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #F5E6D3;
-            padding: 7px 8px 7px 25px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.82em;
+            display: flex; align-items: center; gap: 8px;
+            color: #F5E6D3; padding: 7px 8px 7px 25px;
+            text-decoration: none; border-radius: 6px; font-size: 0.82em;
             transition: background 0.2s;
         }
         .submenu a:hover { background: #2A1F14; }
         
-        .main { margin-left: 220px; padding: 25px; }
+        .main { margin-left: 220px; padding: 25px; transition: margin-left 0.3s ease; }
         
-        /* Logo */
+        /* Logo flutuante */
         .logo-container { position: fixed; top: 12px; right: 12px; z-index: 1000; }
         .logo-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(180, 60, 60, 0.5) 0%, rgba(120, 30, 30, 0.2) 50%, transparent 70%); box-shadow: 0 0 30px rgba(180, 60, 60, 0.4), 0 0 60px rgba(150, 40, 40, 0.2); animation: pulsar 3s ease-in-out infinite; }
         @keyframes pulsar { 0%, 100% { box-shadow: 0 0 30px rgba(180, 60, 60, 0.4), 0 0 60px rgba(150, 40, 40, 0.2); } 50% { box-shadow: 0 0 40px rgba(200, 70, 70, 0.6), 0 0 80px rgba(170, 50, 50, 0.4); } }
@@ -84,21 +62,35 @@
         .btn { background: #8B6B4A; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; text-decoration: none; display: inline-block; }
         .btn:hover { background: #A37D5A; }
         .btn-outline { background: transparent; border: 1px solid #8B6B4A; color: #8B6B4A; }
-        
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #5C4A37; font-size: 0.9em; }
         th { color: #D4B896; }
-        
         input, textarea, select { background: #2A1F14; border: 1px solid #5C4A37; color: #F5E6D3; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 10px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #D4B896; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
+        /* Hamburger */
+        .hamburger {
+            display: none;
+            position: fixed; top: 10px; left: 10px; z-index: 200;
+            background: #8B6B4A; border: none; color: white;
+            width: 40px; height: 40px; border-radius: 8px;
+            font-size: 1.5em; cursor: pointer;
+        }
+        
+        /* Overlay mobile */
+        .overlay {
+            display: none;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 99;
+        }
+        .overlay.show { display: block; }
+        
         /* Chat Claudete */
         .chat-popup-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; z-index: 1000; border: none; background: transparent; overflow: hidden; padding: 0; animation: pulse-avatar 2s ease-in-out infinite; }
         @keyframes pulse-avatar { 0%, 100% { box-shadow: 0 0 0 0 rgba(139, 107, 74, 0.6); } 50% { box-shadow: 0 0 0 15px rgba(139, 107, 74, 0); } }
         .chat-popup-btn img { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #D4B896; box-shadow: 0 4px 15px rgba(0,0,0,0.5); object-fit: cover; }
-        
         .chat-popup { position: fixed; bottom: 90px; right: 20px; width: 380px; height: 500px; background: #2A1F14; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.7); z-index: 1000; display: none; flex-direction: column; }
         .chat-popup.active { display: flex; }
         .chat-popup-header { background: #3E3526; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 16px 16px 0 0; }
@@ -113,38 +105,41 @@
         footer { text-align: center; padding: 15px; margin-top: 40px; border-top: 1px solid #5C4A37; font-size: 0.8em; color: #8B6B4A; }
         footer a { color: #D4B896; text-decoration: none; }
         
-        @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: relative; } .main { margin-left: 0; } .chat-popup { width: 95%; right: 2.5%; } .form-row { grid-template-columns: 1fr; } }
-a, a:visited, a:link, a:active {
-    color: #F5E6D3 !important;
-    text-decoration: none;
-}
-a:hover {
-    color: #D4B896 !important;
-}
-.submenu a {
-    color: #F5E6D3 !important;
-}
-.submenu a:hover {
-    background: #2A1F14;
-    color: #D4B896 !important;
-}
-.menu-category {
-    color: #D4B896 !important;
-}
+        /* Mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 260px;
+                z-index: 150;
+            }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .main { margin-left: 0 !important; padding-top: 60px; }
+            .hamburger { display: block; }
+            .logo-container { top: 8px; right: 8px; }
+            .logo-glow { width: 60px; height: 60px; }
+            .logo-img { width: 50px; height: 50px; }
+            .chat-popup { width: 95%; right: 2.5%; }
+            .form-row { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
+<!-- Hamburger (mobile) -->
+<button class="hamburger" id="hamburgerBtn" onclick="toggleMenu()">☰</button>
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<!-- Logo flutuante -->
 <div class="logo-container">
     <div class="logo-glow"></div>
     <img src="/static/logo.png" alt="Sabor e Prosa" class="logo-img" onerror="this.style.display='none'; this.parentElement.querySelector('.logo-glow').style.display='none';">
 </div>
 
 <!-- Sidebar -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
     <h2>🍽️ Sabor e Prosa</h2>
     
-    <div class="menu-category" onclick="toggleMenu(this)">🏪 Comercial <span class="arrow">▶</span></div>
+    <div class="menu-category" onclick="toggleSubmenu(this)">🏪 Comercial <span class="arrow">▶</span></div>
     <div class="submenu">
         <a href="/dashboard">📊 Dashboard</a>
         <a href="/pdv">🛒 PDV</a>
@@ -154,18 +149,18 @@ a:hover {
         <a href="/rotas">🗺️ Rotas</a>
     </div>
     
-    <div class="menu-category" onclick="toggleMenu(this)">📦 Estoque & Cadastros <span class="arrow">▶</span></div>
+    <div class="menu-category" onclick="toggleSubmenu(this)">📦 Estoque & Cadastros <span class="arrow">▶</span></div>
     <div class="submenu">
         <a href="/produtos">📦 Produtos</a>
         <a href="/fornecedores">🚚 Fornecedores</a>
         <a href="/clientes">👥 Clientes</a>
-        <a href="/kits">🎁 Kits & Cestas</a>
+        <a href="/kits">🎁 Kits</a>
         <a href="/eventos">🎉 Eventos</a>
         <a href="/auditoria">📱 Auditoria</a>
         <a href="/checklist">✅ Checklist</a>
     </div>
     
-    <div class="menu-category" onclick="toggleMenu(this)">📱 Marketing <span class="arrow">▶</span></div>
+    <div class="menu-category" onclick="toggleSubmenu(this)">📱 Marketing <span class="arrow">▶</span></div>
     <div class="submenu">
         <a href="/conteudo">📱 Conteúdo</a>
         <a href="/estudio">🎬 Estúdio</a>
@@ -173,7 +168,7 @@ a:hover {
         <a href="/qrcode">📱 QR Code</a>
     </div>
     
-    <div class="menu-category" onclick="toggleMenu(this)">🔧 Operações <span class="arrow">▶</span></div>
+    <div class="menu-category" onclick="toggleSubmenu(this)">🔧 Operações <span class="arrow">▶</span></div>
     <div class="submenu">
         <a href="/radar">📡 Radar</a>
         <a href="/monitor">📦 Monitor</a>
@@ -188,7 +183,6 @@ a:hover {
 <button class="chat-popup-btn" id="chatToggle">
     <img src="/static/avatar-claudete.png" alt="Claudete">
 </button>
-
 <div class="chat-popup" id="chatPopup">
     <div class="chat-popup-header">
         <div style="display:flex;align-items:center;gap:10px;">
@@ -211,13 +205,13 @@ a:hover {
 </div>
 
 <script>
-    // Menu recolhido com expansão ao clique
-    function toggleMenu(el) {
+    // Toggle submenu
+    function toggleSubmenu(el) {
         el.classList.toggle('open');
         el.nextElementSibling.classList.toggle('show');
     }
     
-    // Abrir a categoria da página atual automaticamente
+    // Abrir categoria da página atual
     var currentPath = window.location.pathname;
     document.querySelectorAll('.submenu a').forEach(function(a) {
         if (a.getAttribute('href') === currentPath) {
@@ -227,6 +221,21 @@ a:hover {
             submenu.classList.add('show');
             submenu.previousElementSibling.classList.add('open');
         }
+    });
+    
+    // Menu mobile
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('mobile-open');
+        document.getElementById('overlay').classList.toggle('show');
+    }
+    
+    // Fechar menu ao clicar em link (mobile)
+    document.querySelectorAll('.sidebar a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                toggleMenu();
+            }
+        });
     });
     
     // Chat
@@ -260,7 +269,7 @@ a:hover {
     
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/static/sw.js').then(function(reg) { console.log('SW registrado!'); }).catch(function(err) { console.log('SW falhou:', err); });
+            navigator.serviceWorker.register('/static/sw.js').then(function(reg) { console.log('SW registrado!'); }).catch(function(err) {});
         });
     }
 </script>
