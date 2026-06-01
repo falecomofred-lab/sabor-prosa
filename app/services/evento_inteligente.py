@@ -5,59 +5,78 @@ from typing import List, Dict
 
 class EventoInteligente:
     
-    @staticmethod
-    async def buscar_eventos_regiao(regiao: str = "Niterói") -> List[Dict]:
-        hoje = datetime.utcnow().date()
-        eventos_sugeridos = [
-            {
-                "nome": "Feira Gastronômica de Niterói",
-                "data": (hoje + timedelta(days=25)).strftime("%Y-%m-%d"),
-                "local": "Praça Central - Niterói",
-                "tipo": "feira",
-                "fonte": "Prefeitura Municipal",
-                "inscricao": "https://prefeitura.niteroi.gov.br/feiras",
-                "prazo_inscricao": (hoje + timedelta(days=10)).strftime("%d/%m/%Y"),
-                "custo_estimado": 150.00,
-                "publico_estimado": 2000,
-                "match": "alta"
-            },
-            {
-                "nome": "Festival Queijos & Vinhos RJ",
-                "data": (hoje + timedelta(days=45)).strftime("%Y-%m-%d"),
-                "local": "Jockey Club - Rio de Janeiro",
-                "tipo": "gastronomico",
-                "fonte": "Sympla",
-                "inscricao": "https://sympla.com.br/queijos-vinhos-rj",
-                "prazo_inscricao": (hoje + timedelta(days=20)).strftime("%d/%m/%Y"),
-                "custo_estimado": 350.00,
-                "publico_estimado": 5000,
-                "match": "altissima"
-            },
-            {
-                "nome": "Feira de Agricultura Familiar",
-                "data": (hoje + timedelta(days=15)).strftime("%Y-%m-%d"),
-                "local": "Parque Rural - São Gonçalo",
-                "tipo": "feira",
-                "fonte": "EMATER",
-                "inscricao": "https://emater.rj.gov.br/feiras",
-                "prazo_inscricao": (hoje + timedelta(days=5)).strftime("%d/%m/%Y"),
-                "custo_estimado": 50.00,
-                "publico_estimado": 800,
-                "match": "media"
-            },
-            {
-                "nome": "Circuito Cultural Niterói",
-                "data": (hoje + timedelta(days=60)).strftime("%Y-%m-%d"),
-                "local": "Museu de Arte Contemporânea - Niterói",
-                "tipo": "cultural",
-                "fonte": "Secretaria de Cultura",
-                "inscricao": "https://cultura.niteroi.gov.br/editais",
-                "prazo_inscricao": (hoje + timedelta(days=30)).strftime("%d/%m/%Y"),
-                "custo_estimado": 100.00,
-                "publico_estimado": 3000,
-                "match": "alta"
-            }
-        ]
+   @staticmethod
+async def buscar_eventos_regiao(regiao: str = "Niterói") -> List[Dict]:
+    """Retorna links e dicas reais para buscar eventos na região."""
+    hoje = datetime.utcnow().date()
+    
+    return [
+        {
+            "nome": "🔗 Sympla - Buscar eventos em " + regiao,
+            "data": "",
+            "local": "Online",
+            "tipo": "link",
+            "fonte": "Sympla",
+            "inscricao": f"https://www.sympla.com.br/eventos?q={regiao}&tipo=feira+gastronomica",
+            "prazo_inscricao": "Buscar agora",
+            "custo_estimado": 0,
+            "publico_estimado": 0,
+            "match": "alta",
+            "acao": "Buscar no Sympla"
+        },
+        {
+            "nome": "🔗 Eventbrite - Eventos em " + regiao,
+            "data": "",
+            "local": "Online",
+            "tipo": "link",
+            "fonte": "Eventbrite",
+            "inscricao": f"https://www.eventbrite.com.br/d/brazil--{regiao}/food-and-drink/",
+            "prazo_inscricao": "Buscar agora",
+            "custo_estimado": 0,
+            "publico_estimado": 0,
+            "match": "alta",
+            "acao": "Buscar no Eventbrite"
+        },
+        {
+            "nome": "🔗 Prefeitura de " + regiao + " - Editais e Feiras",
+            "data": "",
+            "local": regiao,
+            "tipo": "link",
+            "fonte": "Prefeitura Municipal",
+            "inscricao": f"https://www.google.com/search?q=prefeitura+{regiao}+editais+feiras+gastronomicas",
+            "prazo_inscricao": "Buscar agora",
+            "custo_estimado": 0,
+            "publico_estimado": 0,
+            "match": "alta",
+            "acao": "Buscar Editais"
+        },
+        {
+            "nome": "🔗 SEBRAE - Capacitação e Feiras",
+            "data": "",
+            "local": "Regional",
+            "tipo": "link",
+            "fonte": "SEBRAE",
+            "inscricao": "https://www.sebrae.com.br/sites/PortalSebrae/ufs/rj",
+            "prazo_inscricao": "Buscar agora",
+            "custo_estimado": 0,
+            "publico_estimado": 0,
+            "match": "media",
+            "acao": "Acessar SEBRAE RJ"
+        },
+        {
+            "nome": "🔗 Google Alertas - Monitorar oportunidades",
+            "data": "",
+            "local": "Online",
+            "tipo": "link",
+            "fonte": "Google Alertas",
+            "inscricao": f"https://www.google.com/alerts?q=feira+gastronomica+{regiao}",
+            "prazo_inscricao": "Configurar agora",
+            "custo_estimado": 0,
+            "publico_estimado": 0,
+            "match": "media",
+            "acao": "Criar Alerta"
+        }
+    ]
         return sorted(eventos_sugeridos, key=lambda e: e["data"])
     
     @staticmethod
