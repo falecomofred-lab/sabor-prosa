@@ -59,7 +59,76 @@ app.include_router(apis_publicas.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    html = """<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor e Prosa - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1A120B; color: #F5E6D3; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-container { text-align: center; }
+        .logo { font-size: 4em; margin-bottom: 20px; }
+        .card { background: #3E3526; border-radius: 16px; padding: 40px; width: 90%; max-width: 400px; margin: 0 auto; }
+        .card h1 { color: #D4B896; margin-bottom: 20px; font-size: 1.5em; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; color: #D4B896; }
+        .form-group input { background: #2A1F14; border: 1px solid #5C4A37; color: #F5E6D3; padding: 12px; border-radius: 8px; width: 100%; font-size: 1em; }
+        .btn { background: #8B6B4A; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 1.1em; width: 100%; font-weight: bold; }
+        .erro { color: #C23B22; margin-top: 10px; display: none; }
+        .footer { margin-top: 20px; font-size: 0.85em; color: #8B6B4A; }
+        .footer a { color: #D4B896; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🍽️</div>
+        <div class="card">
+            <h1>Sabor e Prosa</h1>
+            <form onsubmit="return fazerLogin(event)">
+                <div class="form-group">
+                    <label>Usuário</label>
+                    <input type="text" id="usuario" placeholder="Digite seu usuário" required>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="senha" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn">🔐 Entrar</button>
+                <p class="erro" id="erro">Usuário ou senha inválidos</p>
+            </form>
+        </div>
+        <div class="footer">Desenvolvido por <a href="https://venure.com.br" target="_blank">venure.com.br</a></div>
+    </div>
+    <script>
+        async function fazerLogin(e) {
+            e.preventDefault();
+            const usuario = document.getElementById('usuario').value;
+            const senha = document.getElementById('senha').value;
+            const resp = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({usuario, senha})
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('usuario', data.usuario);
+                window.location.href = '/dashboard';
+            } else {
+                document.getElementById('erro').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    # Redirecionar para home
+    return RedirectResponse(url="/")
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
