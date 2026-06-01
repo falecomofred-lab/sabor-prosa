@@ -203,11 +203,10 @@ async function cotarDelivery() {
         
         var html = '';
         data.cotacoes.forEach(function(c) {
-            html += '<div style="padding:10px;margin:5px 0;background:#3E3526;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">';
-            html += '<div>' + c.icone + ' <strong>' + c.servico + '</strong><br>⏱️ ' + c.prazo + '</div>';
-            html += '<div style="text-align:right;"><span style="color:#D4B896;font-size:1.2em;">R$ ' + c.valor.toFixed(2) + '</span><br>';
-            html += '<button class="btn" style="font-size:0.75em;" onclick="solicitarMotoboy(\'' + c.servico + '\')">Solicitar</button></div>';
-            html += '</div>';
+            html += '<div><span style="font-size:1.5em;">' + c.icone + '</span> <strong>' + c.servico + '</strong><br>⏱️ ' + c.prazo + ' | 📍 ' + (c.regiao || '') + '</div>';
+html += '<div style="text-align:right;"><span style="color:#D4B896;font-size:1.2em;">R$ ' + c.valor.toFixed(2) + '</span><br>';
+html += '<a href="' + c.link + '" target="_blank" class="btn" style="font-size:0.75em;background:#5C4A37;">🔗 Visitar Site</a> ';
+html += '<button class="btn" style="font-size:0.75em;" onclick="solicitarMotoboy(\'' + c.servico + '\')">📱 Solicitar</button></div>';
         });
         document.getElementById('resultadoDelivery').innerHTML = html;
     } catch(e) {

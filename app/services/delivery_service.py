@@ -1,5 +1,5 @@
 ﻿import httpx
-from typing import Dict, Any
+from typing import Dict, Any, List
 from datetime import datetime
 
 class DeliveryService:
@@ -12,14 +12,35 @@ class DeliveryService:
     ) -> Dict[str, Any]:
         """Simula cotação de frete com serviços de moto delivery."""
         
-        # Simulação de cotações (no futuro, integrar com APIs reais)
         cotacoes = [
+            {
+                "servico": "Delivery Niterói",
+                "prazo": "25-40 min",
+                "valor": round(9.90 + (peso_kg * 1.8), 2),
+                "tipo": "Moto",
+                "icone": "🏍️",
+                "regiao": "Niterói e São Gonçalo",
+                "site": "https://deliveryniteroi.com.br",
+                "link": "https://deliveryniteroi.com.br/solicitar"
+            },
+            {
+                "servico": "MotoFlash RJ",
+                "prazo": "30-45 min",
+                "valor": round(11.50 + (peso_kg * 1.5), 2),
+                "tipo": "Moto",
+                "icone": "🛵",
+                "regiao": "Niterói, São Gonçalo e Rio",
+                "site": "https://motoflashrj.com.br",
+                "link": "https://motoflashrj.com.br/entrega"
+            },
             {
                 "servico": "99Entregas",
                 "prazo": "30-45 min",
                 "valor": round(8.50 + (peso_kg * 1.5), 2),
                 "tipo": "Moto",
                 "icone": "🏍️",
+                "regiao": "Nacional",
+                "site": "https://99app.com/entregas",
                 "link": "https://99app.com/entregas"
             },
             {
@@ -28,15 +49,19 @@ class DeliveryService:
                 "valor": round(10.00 + (peso_kg * 1.2), 2),
                 "tipo": "Moto",
                 "icone": "🛵",
-                "link": "https://www.loggi.com"
+                "regiao": "Nacional",
+                "site": "https://www.loggi.com",
+                "link": "https://www.loggi.com/cotar"
             },
             {
-                "servico": "MotoLink",
-                "prazo": "25-40 min",
-                "valor": round(7.00 + (peso_kg * 1.8), 2),
+                "servico": "Rapiddo (Rede Local)",
+                "prazo": "20-35 min",
+                "valor": round(7.50 + (peso_kg * 2.0), 2),
                 "tipo": "Moto",
                 "icone": "🏍️",
-                "link": "https://motolink.com.br"
+                "regiao": "Niterói e Grande Rio",
+                "site": "https://rapiddo.com.br",
+                "link": "https://rapiddo.com.br/solicitar"
             }
         ]
         
@@ -66,6 +91,5 @@ class DeliveryService:
             "previsao_retirada": "15-20 minutos",
             "previsao_entrega": "45-60 minutos",
             "status": "Aguardando motoboy",
-            "link_rastreio": "https://99app.com/entregas/rastrear",
             "mensagem": f"🚀 {servico} acionado! Motoboy a caminho para retirada."
         }
