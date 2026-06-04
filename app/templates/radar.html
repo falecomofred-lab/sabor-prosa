@@ -56,16 +56,19 @@ async function buscarRadar() {
         var resp = await fetch('/api/eventos-inteligentes/radar?regiao=' + encodeURIComponent(regiao));
         var data = await resp.json();
         var html = '';
-        data.forEach(function(e) {
-            var cor = e.match === 'altissima' ? '#D4B896' : e.match === 'alta' ? '#4CAF50' : '#8B6B4A';
-            html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;border-left:4px solid ' + cor + ';">';
-            html += '<strong>' + (e.match === 'altissima' ? '⭐ ' : '') + e.nome + '</strong><br>';
-            html += '📅 ' + new Date(e.data + 'T00:00:00').toLocaleDateString('pt-BR') + ' | 📍 ' + e.local + '<br>';
-            html += '👥 ' + e.publico_estimado + ' pessoas | 💰 Custo: R$ ' + e.custo_estimado.toFixed(2) + '<br>';
-            html += '🔗 ' + e.fonte + ' | ⏰ Inscrições até: ' + e.prazo_inscricao + '<br>';
-            html += '<a href="' + e.inscricao + '" target="_blank" class="btn" style="font-size:0.75em;margin-top:5px;">Inscrever-se</a>';
-            html += '</div>';
-        });
+       data.forEach(function(e) {
+    var cor = e.match === 'alta' ? '#D4B896' : '#8B6B4A';
+    html += '<div style="padding:12px;margin:8px 0;background:#3E3526;border-radius:8px;border-left:4px solid ' + cor + ';">';
+    html += '<strong>' + e.nome + '</strong><br>';
+    if (e.data) html += '📅 ' + new Date(e.data + 'T00:00:00').toLocaleDateString('pt-BR') + ' | ';
+    if (e.local) html += '📍 ' + e.local + ' | ';
+    if (e.fonte) html += '🔗 ' + e.fonte;
+    html += '<br>';
+    if (e.inscricao) {
+        html += '<a href="' + e.inscricao + '" target="_blank" class="btn" style="font-size:0.8em;margin-top:5px;background:#5C4A37;">' + (e.acao || 'Acessar') + '</a> ';
+    }
+    html += '</div>';
+});
         document.getElementById('resultadoRadar').innerHTML = html || '<p style="color:#8B6B4A;">Nenhum evento encontrado para ' + regiao + '.</p>';
     } catch(e) {
         document.getElementById('resultadoRadar').innerHTML = '<p style="color:#C23B22;">Erro ao buscar eventos.</p>';
