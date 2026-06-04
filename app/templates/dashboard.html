@@ -1,173 +1,412 @@
 ﻿{% extends "base.html" %}
 {% block content %}
-<h1>📊 Dashboard</h1>
 
-<!-- Cards de Métricas -->
-<div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;margin-bottom:20px;">
-    <div style="background:linear-gradient(135deg, #4A3C2C, #3E3526);border-radius:12px;padding:20px;text-align:center;border:1px solid #5C4A37;">
-        <div style="font-size:2.5em;font-weight:bold;color:#D4B896;">{{ total_estoque }}</div>
-        <div style="color:#8B6B4A;font-size:0.9em;">📦 Itens em Estoque</div>
-        <div style="font-size:0.75em;color:#5C4A37;margin-top:5px;">{{ total_produtos }} produtos</div>
-    </div>
-    <div style="background:linear-gradient(135deg, #4A3C2C, #3E3526);border-radius:12px;padding:20px;text-align:center;border:1px solid #5C4A37;">
-        <div style="font-size:2.5em;font-weight:bold;color:#D4B896;">{{ total_produtos }}</div>
-        <div style="color:#8B6B4A;font-size:0.9em;">📦 Produtos</div>
-        <div style="font-size:0.75em;color:#5C4A37;margin-top:5px;">Cadastrados</div>
-    </div>
-    <div style="background:linear-gradient(135deg, #4A3C2C, #3E3526);border-radius:12px;padding:20px;text-align:center;border:1px solid #5C4A37;">
-        <div style="font-size:2.5em;font-weight:bold;color:#D4B896;">{{ margem_media }}%</div>
-        <div style="color:#8B6B4A;font-size:0.9em;">💰 Margem Média</div>
-        <div style="font-size:0.75em;color:#5C4A37;margin-top:5px;">Geral</div>
-    </div>
-    <div style="background:linear-gradient(135deg, #4A3C2C, #3E3526);border-radius:12px;padding:20px;text-align:center;border:1px solid #5C4A37;">
-        <div style="font-size:2.5em;font-weight:bold;color:#C23B22;">{{ alertas }}</div>
-        <div style="color:#8B6B4A;font-size:0.9em;">⚠️ Alertas</div>
-        <div style="font-size:0.75em;color:#5C4A37;margin-top:5px;">Precisam de atenção</div>
-    </div>
-</div>
+<style>
+    /* ========== DASHBOARD MOBILE-FIRST ========== */
+    .dashboard-container {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    /* Métricas - Grid responsivo */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #4A3C2C, var(--bg-secondary));
+        border-radius: var(--radius-md);
+        padding: clamp(12px, 3vw, 20px);
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border: 1px solid var(--accent-light);
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .metric-card .metric-value {
+        font-size: clamp(1.5em, 5vw, 2.5em);
+        color: var(--text-secondary);
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .metric-card .metric-label {
+        font-size: clamp(0.7em, 2.5vw, 0.85em);
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+    
+    .metric-card .metric-sub {
+        font-size: clamp(0.6em, 2vw, 0.75em);
+        color: var(--accent-light);
+        margin-top: 2px;
+    }
+    
+    .metric-card.alert .metric-value { color: var(--danger); }
+    .metric-card.success .metric-value { color: var(--success); }
+    
+    /* Info do dia - Grid responsivo */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    
+    .info-card {
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        padding: clamp(10px, 2.5vw, 15px);
+        text-align: center;
+        border: 1px solid var(--accent-light);
+    }
+    
+    .info-card .info-icon {
+        font-size: clamp(1.5em, 5vw, 2em);
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    .info-card .info-text {
+        font-size: clamp(0.7em, 2.5vw, 0.85em);
+        line-height: 1.4;
+    }
+    
+    .info-card .info-highlight {
+        font-size: clamp(0.85em, 3vw, 1.1em);
+        color: var(--text-secondary);
+        font-weight: 600;
+    }
+    
+    /* Ações rápidas - Grid responsivo */
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    
+    .action-card {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+        padding: clamp(8px, 2vw, 15px) clamp(4px, 1vw, 10px);
+        text-align: center;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all var(--transition-fast);
+        border: 1px solid var(--accent-light);
+    }
+    
+    .action-card:hover {
+        background: var(--accent-light);
+        color: var(--text-secondary);
+    }
+    
+    .action-card .action-icon {
+        font-size: clamp(1.2em, 4vw, 1.8em);
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    .action-card .action-label {
+        font-size: clamp(0.6em, 2vw, 0.75em);
+        line-height: 1.2;
+    }
+    
+    /* Prioridades */
+    .prioridade-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--accent-light);
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .prioridade-item:last-child {
+        border-bottom: none;
+    }
+    
+    .prioridade-item .texto {
+        flex: 1;
+        font-size: clamp(0.8em, 3vw, 0.9em);
+        min-width: 150px;
+    }
+    
+    .prioridade-item .acao {
+        white-space: nowrap;
+    }
+    
+    /* Títulos de seção */
+    .section-title {
+        font-size: clamp(1em, 3.5vw, 1.2em);
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+    
+    /* ========== DESKTOP (>= 768px) ========== */
+    @media (min-width: 768px) {
+        .metrics-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        
+        .info-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        
+        .actions-grid {
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+        }
+        
+        .dashboard-main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .dashboard-full {
+            grid-column: 1 / -1;
+        }
+    }
+    
+    /* ========== TABLET (480px - 767px) ========== */
+    @media (min-width: 480px) and (max-width: 767px) {
+        .metrics-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .actions-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+    }
+</style>
 
-<!-- Informações do Dia -->
-<div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;margin-bottom:20px;">
-    <div id="climaCard" style="background:#2A1F14;border-radius:12px;padding:15px;text-align:center;border:1px solid #3E3526;">
-        <span style="font-size:2em;">🌤️</span><br><span style="font-size:0.85em;">Carregando clima...</span>
-    </div>
-    <div id="cotacaoCard" style="background:#2A1F14;border-radius:12px;padding:15px;text-align:center;border:1px solid #3E3526;">
-        <span style="font-size:2em;">💵</span><br><span style="font-size:0.85em;">Carregando cotação...</span>
-    </div>
-    <div id="feriadosCard" style="background:#2A1F14;border-radius:12px;padding:15px;text-align:center;border:1px solid #3E3526;">
-        <span style="font-size:2em;">📅</span><br><span style="font-size:0.85em;">Carregando feriados...</span>
-    </div>
-    <div id="gasolinaCard" style="background:#2A1F14;border-radius:12px;padding:15px;text-align:center;border:1px solid #3E3526;">
-        <span style="font-size:2em;">⛽</span><br><span style="font-size:0.85em;">Carregando combustível...</span>
-    </div>
-</div>
-
-<!-- Ações Rápidas -->
-<div class="card">
-    <h2>⚡ Ações Rápidas</h2>
-    <div style="display:grid;grid-template-columns:repeat(8, 1fr);gap:8px;">
-        <a href="/pdv" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">🛒</div><div style="font-size:0.75em;margin-top:5px;">Nova Venda</div>
+<div class="dashboard-container">
+    
+    <!-- ========== MÉTRICAS PRINCIPAIS ========== -->
+    <div class="metrics-grid">
+        <a href="/pdv" class="metric-card">
+            <div class="metric-value">{{ total_estoque }}</div>
+            <div class="metric-label">📦 Em Estoque</div>
+            <div class="metric-sub">{{ total_produtos }} produtos</div>
         </a>
-        <a href="/produtos" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">📦</div><div style="font-size:0.75em;margin-top:5px;">Produto</div>
+        <a href="/produtos" class="metric-card">
+            <div class="metric-value">{{ total_produtos }}</div>
+            <div class="metric-label">📦 Produtos</div>
+            <div class="metric-sub">Cadastrados</div>
         </a>
-        <a href="/clientes" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">👥</div><div style="font-size:0.75em;margin-top:5px;">Cliente</div>
-        </a>
-        <a href="/conteudo" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">📱</div><div style="font-size:0.75em;margin-top:5px;">Post</div>
-        </a>
-        <a href="/rotas" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">🗺️</div><div style="font-size:0.75em;margin-top:5px;">Rotas</div>
-        </a>
-        <a href="/qrcode" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">📱</div><div style="font-size:0.75em;margin-top:5px;">QR Code</div>
-        </a>
-        <a href="/gatilhos" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">🎯</div><div style="font-size:0.75em;margin-top:5px;">Gatilhos</div>
-        </a>
-        <a href="/estudio" style="background:#3E3526;border-radius:10px;padding:15px 10px;text-align:center;text-decoration:none;color:#F5E6D3;transition:all 0.2s;" onmouseover="this.style.background='#5C4A37'" onmouseout="this.style.background='#3E3526'">
-            <div style="font-size:1.8em;">🎬</div><div style="font-size:0.75em;margin-top:5px;">Estúdio</div>
+        <div class="metric-card">
+            <div class="metric-value">{{ margem_media }}%</div>
+            <div class="metric-label">💰 Margem</div>
+            <div class="metric-sub">Média geral</div>
+        </div>
+        <a href="/fechamento" class="metric-card alert">
+            <div class="metric-value">{{ alertas }}</div>
+            <div class="metric-label">⚠️ Alertas</div>
+            <div class="metric-sub">Precisam de atenção</div>
         </a>
     </div>
-</div>
-
-<!-- Prioridades -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-    <div class="card" style="border-left:4px solid #C23B22;">
-        <h2>🔴 Prioridade Alta</h2>
-        <div id="prioridadeAlta"><p style="color:#8B6B4A;">Carregando...</p></div>
+    
+    <!-- ========== INFORMAÇÕES DO DIA ========== -->
+    <div class="info-grid">
+        <div class="info-card" id="climaCard">
+            <span class="info-icon">🌤️</span>
+            <span class="info-text">Carregando...</span>
+        </div>
+        <div class="info-card" id="cotacaoCard">
+            <span class="info-icon">💵</span>
+            <span class="info-text">Carregando...</span>
+        </div>
+        <div class="info-card" id="feriadosCard">
+            <span class="info-icon">📅</span>
+            <span class="info-text">Carregando...</span>
+        </div>
+        <div class="info-card" id="gasolinaCard">
+            <span class="info-icon">⛽</span>
+            <span class="info-text">Carregando...</span>
+        </div>
     </div>
-    <div class="card" style="border-left:4px solid #D4B896;">
-        <h2>🟡 Prioridade Média</h2>
-        <div id="prioridadeMedia"><p style="color:#8B6B4A;">Carregando...</p></div>
+    
+    <!-- ========== AÇÕES RÁPIDAS ========== -->
+    <div class="card">
+        <div class="section-title">⚡ Ações Rápidas</div>
+        <div class="actions-grid">
+            <a href="/pdv" class="action-card">
+                <span class="action-icon">🛒</span>
+                <span class="action-label">Vender</span>
+            </a>
+            <a href="/produtos" class="action-card">
+                <span class="action-icon">📦</span>
+                <span class="action-label">Produto</span>
+            </a>
+            <a href="/clientes" class="action-card">
+                <span class="action-icon">👥</span>
+                <span class="action-label">Cliente</span>
+            </a>
+            <a href="/conteudo" class="action-card">
+                <span class="action-icon">📱</span>
+                <span class="action-label">Post</span>
+            </a>
+            <a href="/rotas" class="action-card">
+                <span class="action-icon">🗺️</span>
+                <span class="action-label">Rotas</span>
+            </a>
+            <a href="/qrcode" class="action-card">
+                <span class="action-icon">📱</span>
+                <span class="action-label">QR Code</span>
+            </a>
+            <a href="/gatilhos" class="action-card">
+                <span class="action-icon">🎯</span>
+                <span class="action-label">Gatilhos</span>
+            </a>
+            <a href="/estudio" class="action-card">
+                <span class="action-icon">🎬</span>
+                <span class="action-label">Estúdio</span>
+            </a>
+        </div>
     </div>
-</div>
-<div class="card" style="border-left:4px solid #4CAF50;">
-    <h2>🟢 Rotina</h2>
-    <div id="prioridadeBaixa"><p style="color:#8B6B4A;">Carregando...</p></div>
+    
+    <!-- ========== PRIORIDADES ========== -->
+    <div class="dashboard-main">
+        <div class="card border-left-danger">
+            <div class="section-title">🔴 Prioridade Alta</div>
+            <div id="prioridadeAlta">
+                <p style="color:var(--text-muted);">Carregando...</p>
+            </div>
+        </div>
+        <div class="card border-left-warning">
+            <div class="section-title">🟡 Prioridade Média</div>
+            <div id="prioridadeMedia">
+                <p style="color:var(--text-muted);">Carregando...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-left-success dashboard-full">
+        <div class="section-title">🟢 Rotina</div>
+        <div id="prioridadeBaixa">
+            <p style="color:var(--text-muted);">Carregando...</p>
+        </div>
+    </div>
+    
 </div>
 
 <script>
 // ========== CLIMA ==========
-fetch('/api/publicas/clima?cidade=Niterói').then(r => r.json()).then(d => {
-    if (d.previsao && d.previsao.length > 0) {
-        var hoje = d.previsao[0];
-        document.getElementById('climaCard').innerHTML = 
-            '<span style="font-size:2em;">' + hoje.clima.split(' ')[0] + '</span><br>' +
-            '<strong>' + hoje.temp_max + '°C</strong> / ' + hoje.temp_min + '°C<br>' +
-            '<span style="font-size:0.8em;">💧 ' + hoje.chuva_prob + '%</span><br>' +
-            (hoje.bom_para_feira ? '<span style="color:#4CAF50;font-size:0.8em;">✅ Bom para feira</span>' : '<span style="color:#C23B22;font-size:0.8em;">⚠️ Chuva</span>');
-    }
-}).catch(function() {
-    document.getElementById('climaCard').innerHTML = '<span style="font-size:2em;">🌤️</span><br>Indisponível';
-});
+fetch('/api/publicas/clima?cidade=Niterói')
+    .then(r => r.json())
+    .then(d => {
+        if (d.previsao && d.previsao.length > 0) {
+            var hoje = d.previsao[0];
+            document.getElementById('climaCard').innerHTML = 
+                '<span class="info-icon">' + hoje.clima.split(' ')[0] + '</span>' +
+                '<div class="info-highlight">' + hoje.temp_max + '°C / ' + hoje.temp_min + '°C</div>' +
+                '<span class="info-text">💧 ' + hoje.chuva_prob + '% | ' + (hoje.bom_para_feira ? '✅ Feira' : '⚠️ Chuva') + '</span>';
+        }
+    })
+    .catch(() => {
+        document.getElementById('climaCard').innerHTML = '<span class="info-icon">🌤️</span><span class="info-text">Indisponível</span>';
+    });
 
 // ========== COTAÇÃO ==========
-fetch('/api/publicas/cotacao').then(r => r.json()).then(d => {
-    if (d.dolar) {
-        document.getElementById('cotacaoCard').innerHTML = 
-            '<span style="font-size:2em;">💵</span><br>' +
-            '<strong>Dólar</strong> R$ ' + d.dolar.valor.toFixed(2) + '<br>' +
-            '<strong>Euro</strong> R$ ' + d.euro.valor.toFixed(2);
-    }
-}).catch(function() {
-    document.getElementById('cotacaoCard').innerHTML = '<span style="font-size:2em;">💵</span><br>Indisponível';
-});
+fetch('/api/publicas/cotacao')
+    .then(r => r.json())
+    .then(d => {
+        if (d.dolar) {
+            document.getElementById('cotacaoCard').innerHTML = 
+                '<span class="info-icon">💵</span>' +
+                '<div class="info-highlight">Dólar R$ ' + d.dolar.valor.toFixed(2) + '</div>' +
+                '<span class="info-text">Euro R$ ' + d.euro.valor.toFixed(2) + '</span>';
+        }
+    })
+    .catch(() => {
+        document.getElementById('cotacaoCard').innerHTML = '<span class="info-icon">💵</span><span class="info-text">Indisponível</span>';
+    });
 
 // ========== FERIADOS ==========
-fetch('/api/publicas/feriados').then(r => r.json()).then(d => {
-    if (d.proximos && d.proximos.length > 0) {
-        document.getElementById('feriadosCard').innerHTML = 
-            '<span style="font-size:2em;">🎉</span><br>' +
-            d.proximos.slice(0,2).map(function(f) {
-                return f.emoji + ' <strong>' + f.nome + '</strong><br><span style="font-size:0.8em;">' + f.dias_restantes + ' dias</span>';
-            }).join('<br>');
-    } else {
-        document.getElementById('feriadosCard').innerHTML = '<span style="font-size:2em;">📅</span><br>Sem feriados';
-    }
-}).catch(function() {
-    document.getElementById('feriadosCard').innerHTML = '<span style="font-size:2em;">📅</span><br>Indisponível';
-});
+fetch('/api/publicas/feriados')
+    .then(r => r.json())
+    .then(d => {
+        if (d.proximos && d.proximos.length > 0) {
+            document.getElementById('feriadosCard').innerHTML = 
+                '<span class="info-icon">🎉</span>' +
+                d.proximos.slice(0,2).map(f => 
+                    '<span class="info-text">' + f.emoji + ' ' + f.nome + '</span>' +
+                    '<span class="info-text">' + f.dias_restantes + ' dias</span>'
+                ).join('<br>');
+        } else {
+            document.getElementById('feriadosCard').innerHTML = '<span class="info-icon">📅</span><span class="info-text">Sem feriados</span>';
+        }
+    })
+    .catch(() => {
+        document.getElementById('feriadosCard').innerHTML = '<span class="info-icon">📅</span><span class="info-text">Indisponível</span>';
+    });
 
 // ========== GASOLINA ==========
-fetch('/api/publicas/gasolina').then(r => r.json()).then(d => {
-    document.getElementById('gasolinaCard').innerHTML = 
-        '<span style="font-size:2em;">⛽</span><br>' +
-        '<strong>Gasolina</strong><br>R$ ' + (d.preco_medio || 5.89).toFixed(2);
-}).catch(function() {
-    document.getElementById('gasolinaCard').innerHTML = '<span style="font-size:2em;">⛽</span><br>Indisponível';
-});
+fetch('/api/publicas/gasolina')
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById('gasolinaCard').innerHTML = 
+            '<span class="info-icon">⛽</span>' +
+            '<div class="info-highlight">Gasolina</div>' +
+            '<span class="info-text">R$ ' + (d.preco_medio || 5.89).toFixed(2) + '</span>';
+    })
+    .catch(() => {
+        document.getElementById('gasolinaCard').innerHTML = '<span class="info-icon">⛽</span><span class="info-text">Indisponível</span>';
+    });
 
 // ========== PRIORIDADES ==========
-fetch('/api/dashboard/prioridades').then(r => r.json()).then(function(data) {
-    document.getElementById('prioridadeAlta').innerHTML = data.alta.map(function(p) {
-        return '<p style="padding:6px 0;display:flex;justify-content:space-between;"><span>🚨 ' + p.texto + '</span><a href="' + p.link + '" class="btn" style="font-size:0.75em;padding:4px 10px;">' + p.acao + '</a></p>';
-    }).join('') || '<p style="color:#8B6B4A;">✅ Nenhum item urgente.</p>';
-    
-    document.getElementById('prioridadeMedia').innerHTML = data.media.map(function(p) {
-        return '<p style="padding:6px 0;display:flex;justify-content:space-between;"><span>⚠️ ' + p.texto + '</span><a href="' + p.link + '" class="btn btn-outline" style="font-size:0.75em;padding:4px 10px;">' + p.acao + '</a></p>';
-    }).join('') || '<p style="color:#8B6B4A;">✅ Nenhum item pendente.</p>';
-    
-    document.getElementById('prioridadeBaixa').innerHTML = data.baixa.map(function(p) {
-        return '<p style="padding:4px 0;">• ' + p.texto + '</p>';
-    }).join('') || '<p style="color:#8B6B4A;">✅ Rotina em dia.</p>';
-});
+fetch('/api/dashboard/prioridades')
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('prioridadeAlta').innerHTML = data.alta.length > 0 
+            ? data.alta.map(p => 
+                '<div class="prioridade-item">' +
+                '<span class="texto">🚨 ' + p.texto + '</span>' +
+                '<a href="' + p.link + '" class="btn btn-sm acao">' + p.acao + '</a>' +
+                '</div>'
+            ).join('')
+            : '<p style="color:var(--text-muted);">✅ Nenhum item urgente.</p>';
+        
+        document.getElementById('prioridadeMedia').innerHTML = data.media.length > 0
+            ? data.media.map(p => 
+                '<div class="prioridade-item">' +
+                '<span class="texto">⚠️ ' + p.texto + '</span>' +
+                '<a href="' + p.link + '" class="btn btn-outline btn-sm acao">' + p.acao + '</a>' +
+                '</div>'
+            ).join('')
+            : '<p style="color:var(--text-muted);">✅ Nenhum item pendente.</p>';
+        
+        document.getElementById('prioridadeBaixa').innerHTML = data.baixa.length > 0
+            ? data.baixa.map(p => '<div class="prioridade-item"><span class="texto">• ' + p.texto + '</span></div>').join('')
+            : '<p style="color:var(--text-muted);">✅ Rotina em dia.</p>';
+    })
+    .catch(() => {
+        document.getElementById('prioridadeAlta').innerHTML = '<p style="color:var(--text-muted);">Erro ao carregar.</p>';
+        document.getElementById('prioridadeMedia').innerHTML = '<p style="color:var(--text-muted);">Erro ao carregar.</p>';
+        document.getElementById('prioridadeBaixa').innerHTML = '<p style="color:var(--text-muted);">Erro ao carregar.</p>';
+    });
 </script>
-
-<!-- Links Úteis -->
-<div class="card">
-    <h2>🔗 Links Úteis</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:8px;">
-        <a href="https://www.instagram.com" target="_blank" class="btn btn-outline" style="text-align:center;">📷 Instagram</a>
-        <a href="https://wa.me/5521999999999" target="_blank" class="btn btn-outline" style="text-align:center;background:#25D366;color:white;">📱 WhatsApp</a>
-        <a href="https://www.google.com/business/" target="_blank" class="btn btn-outline" style="text-align:center;">📍 Google Perfil</a>
-        <a href="https://www.linkedin.com" target="_blank" class="btn btn-outline" style="text-align:center;">💼 LinkedIn</a>
-        <a href="https://www.sebrae.com.br" target="_blank" class="btn btn-outline" style="text-align:center;">📚 SEBRAE</a>
-        <a href="https://www.google.com/alerts" target="_blank" class="btn btn-outline" style="text-align:center;">🔔 Alertas</a>
-    </div>
-    <p style="font-size:0.75em;color:#8B6B4A;margin-top:8px;">💡 Substitua os links acima pelas suas redes sociais reais em breve.</p>
-</div>
-
 {% endblock %}
